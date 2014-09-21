@@ -30,7 +30,7 @@ void findfactorial(__int64 num, __int64 factorialanswer)
 
 int main()
 {
-	char details;
+	/* char details;
 	cout << "Factorial Finder  Copyright (C) 2014  Michael Lin \n" << 
 		"This program comes with ABSOLUTELY NO WARRANTY; \n" <<
 		"for details type `w' and press enter. \n" <<
@@ -56,7 +56,7 @@ license:
 				"MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. \n" <<
 				"See the GNU General Public License for more details." << endl << endl;
 		goto license;
-	}
+	} */
 	__int64 num, factorialanswer = 1;
 	do
 	{
