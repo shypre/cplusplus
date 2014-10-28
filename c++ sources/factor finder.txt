@@ -1,0 +1,28 @@
+// practice.cpp : Defines the entry point for the console application.
+//
+
+#include "stdafx.h"
+#include <iostream>
+#include <cstdint>
+#include <cstring>
+
+using namespace std;
+
+int main()
+{
+	unsigned __int64 n, a;
+	cin >> n;
+	unsigned __int64 x = n;
+	while ( x <= n && x >= 1)
+	{
+		if (n % x == 0)
+		{
+			a = n / x;
+			cout << a << endl;
+		}
+		x--;
+	}
+	cin.ignore();
+	cin.get();
+	return 0;
+}
