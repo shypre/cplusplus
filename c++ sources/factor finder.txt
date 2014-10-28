@@ -3,25 +3,32 @@
 
 #include "stdafx.h"
 #include <iostream>
-#include <cstdint>
-#include <cstring>
+#include <cmath>
 
 using namespace std;
 
 int main()
 {
-	unsigned __int64 n, a;
+	long long n;
+	long long x = 1;
 	cin >> n;
-	unsigned __int64 x = n;
-	while ( x <= n && x >= 1)
+	if (n <= 1)
+	{
+		cout << "Number cannot be less than 1" << endl << "Press enter to continue" << endl;
+		cin.ignore();
+		cin.get();
+		return 0;
+	}
+	long long sqn = sqrt(n);
+	while (x <= sqn)
 	{
 		if (n % x == 0)
 		{
-			a = n / x;
-			cout << a << endl;
+			cout << n/x << ", " << x << endl;
 		}
-		x--;
+		x++;
 	}
+	cout << "Press enter to continue" << endl;
 	cin.ignore();
 	cin.get();
 	return 0;
