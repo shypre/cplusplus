@@ -18,15 +18,19 @@ start:
 	cin >> b;
 	cout << "c = ";
 	cin >> c;
-	if ((b*b - 4*a*c) < 0)
+	if ((b*b - 4 * a*c) < 0)
 	{
-		cout << "discriminant is negative. Try again." << endl;
+		cout << "discriminant is negative. Try again." << endl << "Press enter to reuse." << endl;
+		cin.ignore();
+		cin.get();
 		goto start;
 	}
-	ans1 = (-1 * b) + (sqrt((b*b - 4*a*c)))/ 2*a;
-	ans2 = (-1 * b) - (sqrt((b*b - 4*a*c)))/ 2*a;
+	ans1 = ((sqrt((b*b - 4*a*c))) - b) / (2*a);
+	ans2 = ((sqrt((b*b - 4*a*c))) + b) / (2*a);
 	cout << ans1 << endl << ans2 << endl;
-	cin.get();
+	cout << "Press enter to reuse." << endl;
 	cin.ignore();
+	cin.get();
+	goto start;
 	return 0;
 }
