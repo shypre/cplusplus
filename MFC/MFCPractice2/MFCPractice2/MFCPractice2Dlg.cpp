@@ -14,6 +14,8 @@
 #define new DEBUG_NEW
 #endif
 
+#undef UNICODE
+
 using namespace std;
 
 // CAboutDlg dialog used for App About
@@ -173,10 +175,10 @@ void CMFCPractice2Dlg::OnClickedButton1()
 	{
 		if (intinput % x == 0)
 		{
-			strintinput.Format(L"%d", intinput/x);
+			strintinput.Format(L"%I64u", intinput/x);
 			stroutput = strintinput;
 			stroutputcompl += stroutput += ", ";
-			strintinput.Format(L"%d", x);
+			strintinput.Format(L"%I64u", x);
 			stroutput = strintinput;
 			stroutputcompl += stroutput += "| ";
 		}
