@@ -9,11 +9,10 @@ using namespace std;
 char XorO;
 bool PlayerX;
 char grid[9];
-bool SideChosen = false;
+bool SideChosen;
 int choice;
 int i;
-bool win = false;
-
+bool win;
 void ChooseSquareO();
 
 void CheckWin()
@@ -91,6 +90,10 @@ void ChooseSquareO()
 
 int main()
 {
+start:
+	SideChosen = false;
+	win = false;
+	i = 0;
 	cout << "Welcome to TicTacToe!" << endl;
 	for (; i < 9; i++)
 	{
@@ -126,5 +129,6 @@ int main()
 	{
 		ChooseSquareO();
 	}
+	goto start;
 	return 0;
 }
