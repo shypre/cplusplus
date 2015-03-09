@@ -1,5 +1,5 @@
-// TicTacToe.cpp : Defines the entry point for the console application.
-//
+// Copyright (C) 2015 by Michael Lin
+// under the Microsoft Reference Source License (MS-RSL)
 
 #include "stdafx.h"
 #include <iostream>
