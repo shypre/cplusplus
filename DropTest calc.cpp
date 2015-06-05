@@ -11,15 +11,15 @@ using namespace std;
 int main()
 {
 	cout << "DropTest Calculator. Finds out which test to drop so you get the highest mark.\nWhen you are done inserting numbers type done and press enter.\n";
-	vector<vector<int>> marklist (1, vector<int> (2));
+	vector<vector<float>> marklist(1, vector<float>(2));
 	cout << "What did you get on test A? ";
 	cin >> marklist[0][0];
 	cout << "out of? ";
 	cin >> marklist[0][1];
 	int lettercounter = 1;
-	int num;
+	float num;
 	int i = 1;
-	for (; ; ++i, ++lettercounter)
+	for (;; ++i, ++lettercounter)
 	{
 		cout << "What did you get on test " << static_cast<char>('A' + lettercounter) << " ? ";
 		cin >> num;
@@ -29,7 +29,7 @@ int main()
 			cin.ignore(std::numeric_limits<streamsize>::max(), '\n');
 			break;
 		}
-		marklist.push_back(vector<int>(2));
+		marklist.push_back(vector<float>(2));
 		marklist[i][0] = num;
 		cout << "out of? ";
 		cin >> num;
@@ -57,7 +57,7 @@ int main()
 		++k;
 	}
 	// cout << sumtop << ", " << sumbot << endl;
-	vector<float> percents (i);
+	vector<float> percents(i);
 	for (k = 0; k < i;)
 	{
 		percents[k] = (sumtop - marklist[k][0]) / (sumbot - marklist[k][1]);
@@ -71,7 +71,7 @@ int main()
 
 	/* for (int j = 0; j < i ; ++j)
 	{
-		cout << marklist[j][0] << ", " << marklist[j][1] << endl;
+	cout << marklist[j][0] << ", " << marklist[j][1] << endl;
 	} */
 
 
