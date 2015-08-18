@@ -1,5 +1,4 @@
 //Autoclicker (cmd version). Copyright 2015 by Michael Lin.
-//This is also my first time including comments in my code
 
 #include "stdafx.h"
 #define NOMINMAX																//max() is already defined in Windows.h, but it is a different function than what is in <limits>
@@ -14,11 +13,15 @@ int main()
 {
 	cout << "Autoclicker (cmd version). Copyright 2015 by Michael Lin\n";
 	cout.precision(16);															//Sets all floating points that are outputted to have 16 decimal places
-	short Choice;
-	cout << "To have the mouse autoclick at a certain point, enter 1.\n"
-		 << "To have the mouse autoclick wherever the cursor is, enter 2.\n";
+	double ScreenResX = GetSystemMetrics(SM_CXSCREEN),							//Gets screen resolution of main monitor
+		ScreenResY = GetSystemMetrics(SM_CYSCREEN);
+	double XScaleFactor = 65535 / (ScreenResX - 1);								//The scale factor between SendInput's 65535 mapping and screen resolution. Go on MSDN for more info
+	double YScaleFactor = 65535 / (ScreenResY - 1);								//The subtract 1 is because C++ always rounds toward 0
+	unsigned short Choice;
+	cout << "To have the mouse autoclick at a certain point, enter 0.\n"
+		 << "To have the mouse autoclick wherever the cursor is, enter 1.\n";
 	cin >> Choice;
-	while (cin.fail() || Choice != 1 || Choice != 2)							//In case the user is stupid and/or can't read
+	while (cin.fail() || Choice > 1)											//In case the user is stupid and/or can't read
 	{
 		cin.clear();															//Proper way to handle cin.fail() is to 1. clear cin.fail flag
 		cin.ignore(numeric_limits<streamsize>::max(), '\n');					//and 2. reset the buffer
@@ -26,14 +29,15 @@ int main()
 		cin >> Choice;
 	}
 	stringstream ss;															//Declare it right now because we can reuse this over and over
-	INPUT Input;																//INPUT structure used by SendInput
-	Input.type = INPUT_MOUSE;													//We want mouse input
-	if (Choice == 1)
+	INPUT Input = {0};															//INPUT structure used by SendInput. We want mouse input
+	ZeroMemory(&Input, sizeof(Input));											//Apparently this helps avoid blackscreens with SendInput. Fills Input structure with 0s in memory
+	if (Choice == 0)
 	{
-		Input.mi.dwFlags = MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP;			//DWORD flags
+		Input.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE |			//DWORD flags
+			MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP;
 		POINT CursorPos;														//POINT structure to store mouse location
 		string PosKeyStr = "0xA0";												//Example key. Full list on MSDN
-		int PosKey;																//The virtual keycodes on MSDN is in hex but the actualy keycodes used by C++ functions is in decimal
+		int PosKey;																//The virtual keycodes on MSDN is in hex but the actual keycodes used by C++ functions is in decimal
 		ss << hex << PosKeyStr;													//The good part about stringstreams, it can receive hex input and output it as decimal
 		ss >> PosKey;
 		stringstream().swap(ss);												//Reset the stringstream to a brand new one
@@ -55,30 +59,28 @@ int main()
 				break;
 			}
 		}
+		Input.mi.dx = round (CursorPos.x * XScaleFactor);
+		Input.mi.dy = round (CursorPos.y * YScaleFactor);
 		cout << "Countdown has started!\n";
 		Sleep(Countdown);
+		cout << "Clicking has started\n";
 		while (MouseClicks < UserClicks)
 		{
-			SetCursorPos(CursorPos.x, CursorPos.y);
 			SendInput(1, &Input, sizeof(INPUT));
 			Sleep(Delay);
 			MouseClicks++;
 		}
 		cout << MouseClicks << " Done!\n";
 	}
-	else if (Choice == 2)
+	else if (Choice == 1)
 	{
-		Input.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE |			//DWORD flags
-			MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP;
-		double ScreenResX = GetSystemMetrics(SM_CXSCREEN),						//Gets screen resolution of main monitor
-			ScreenResY = GetSystemMetrics(SM_CYSCREEN);
-		const double XScaleFactor = 65535 / (ScreenResX - 1);					//The scale factor between SendInput's 65535 mapping and screen resolution. Go on MSDN for more info
-		const double YScaleFactor = 65535 / (ScreenResY - 1);					//The subtract 1 is because C++ always rounds toward 0
+		Input.mi.dwFlags = MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP;			//DWORD flags
 		string HotkeyStr = "0xA2";												//Example key
 		int Hotkey;
-		ss << hex << HotkeyStr;													//The ever-useful stringstream again
-		ss >> Hotkey;															//No, ss does not stand for Schutzstaffel
+		ss << hex << HotkeyStr;
+		ss >> Hotkey;
 		stringstream().swap(ss);
+		cout << "Press " << HotkeyStr << " to start clicking\n";
 		while (true)															//While user hold down the key, it will click
 		{
 			while (GetAsyncKeyState(Hotkey) < 0)
