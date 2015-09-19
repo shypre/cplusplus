@@ -167,7 +167,14 @@ HCURSOR CMFCPractice2Dlg::OnQueryDragIcon()
 void CMFCPractice2Dlg::OnClickedButton1()
 {
 	// TODO: Add your control notification handler code here
+	string error2 = "Indalid input, try again.";
+	CString error(error2.c_str());
 	GetDlgItemText(IDC_EDIT1, strintinput);
+	if (!(_wtoi64(strintinput)))
+	{
+		SetDlgItemText(IDC_EDIT2, error);
+		return;
+	}
 	intinput = _wtoi64(strintinput);
 	sqn = sqrt(intinput);
 	x = 1;
@@ -180,7 +187,7 @@ void CMFCPractice2Dlg::OnClickedButton1()
 			stroutputcompl += stroutput += ", ";
 			strintinput.Format(L"%I64u", x);
 			stroutput = strintinput;
-			stroutputcompl += stroutput += "| ";
+			stroutputcompl += stroutput += " | ";
 		}
 		x++;
 	}
