@@ -7,8 +7,23 @@
 #include <sstream>																	//Better way than stoi() or etc. to convert from string to number is stringstreams
 #include <limits>																	//Where the max() we want is from
 #include <string>
+#include <conio.h>
+#include "VirtualKeys.h"
 
 using namespace std;
+
+void FailedInput()
+{
+	cin.clear();
+	cin.ignore(numeric_limits<streamsize>::max(), '\n');
+	cout << "Invalid input, please try again\n";
+}
+
+void ClearStream()
+{
+	cin.clear();
+	cin.ignore(numeric_limits<streamsize>::max(), '\n');
+}
 
 int main()
 {
@@ -21,6 +36,7 @@ int main()
 			ScreenResY = GetSystemMetrics(SM_CYSCREEN);
 		double XScaleFactor = 65535 / ScreenResX,									//The scale factor between SendInput's 65535 mapping and screen resolution. Go on MSDN for more info
 			YScaleFactor = 65535 / ScreenResY;
+		stringstream ss;															//Declare it right now because we can reuse this over and over
 		unsigned long long Choice;
 		cout << "To have the mouse autoclick at a certain point, enter 0\n"
 			<< "To have the mouse autoclick at a specific pixel, enter 1\n"
@@ -28,18 +44,16 @@ int main()
 		cin >> Choice;
 		while (cin.fail() || Choice > 2)											//In case the user is stupid and/or can't read
 		{
-			cin.clear();															//Proper way to handle cin.fail() is to 1. clear cin.fail flag
-			cin.ignore(numeric_limits<streamsize>::max(), '\n');					//and 2. reset the buffer
-			cout << "Invalid input, please try again\n";
+			FailedInput();
 			cin >> Choice;
 		}
-		stringstream ss;															//Declare it right now because we can reuse this over and over
+		ClearStream();
 		INPUT Input = { 0 };														//INPUT structure used by SendInput. 0 is mouse input
 		ZeroMemory(&Input, sizeof(Input));											//Apparently this helps avoid blackscreens with SendInput. Fills Input struct with 0s in memory
 		if (Choice == 0)															//If user wants to autoclick at a certain spot
 		{
-			Input.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE |			//DWORD flags
-				MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP;
+			Input.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK |		//DWORD flags
+				MOUSEEVENTF_MOVE | MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP;
 			POINT CursorPos;														//POINT structure to store mouse location
 			string PosKeyStr;
 			cout << "Enter hex keycode of key to save cursor position (full list on MSDN)\n";
@@ -47,12 +61,14 @@ int main()
 			int PosKey;																//The virtual keycodes on MSDN is in hex but the actual keycodes used by C++ functions is in decimal														
 			while (!(ss << hex << PosKeyStr) || !(ss >> PosKey))					//If the entered string is invalid
 			{																		//The good part about stringstreams, it can receive hex input and output it as decimal
-				cout << "Invalid Input, please try again\n";
-				stringstream().swap(ss);
+				FailedInput();
+				ss.str("");
 				ss.clear();
 				cin >> PosKeyStr;									
 			}
-			stringstream().swap(ss);												//Reset the stringstream to a brand new one
+			ClearStream();
+			ss.str("");
+			ss.clear();
 			unsigned long long Delay, Countdown, UserClicks, MouseClicks = 0;
 			cout << "Set number of clicks\n";
 			cin >> UserClicks;
@@ -60,7 +76,7 @@ int main()
 			cin >> Delay;
 			cout << "Set countdown (in milliseconds)\n";
 			cin >> Countdown;
-			cout << "Press " << PosKeyStr << " to get the position of the cursor\n";
+			cout << "Press " << hex << "0x" << PosKey << " to get the position of the cursor\n";
 			while (true)															//Checks whether key is down or not with a loop. Takes decimal and not hex as parameter (as stated above)
 			{
 				if (GetAsyncKeyState(PosKey) < 0)
@@ -68,6 +84,7 @@ int main()
 					GetCursorPos(&CursorPos);
 					break;
 				}
+				Sleep(100);															//Polling period of 100 milliseconds
 			}
 			Input.mi.dx = round(CursorPos.x * XScaleFactor);						//Explicitly saying to round because C++ always rounds towards zero by default
 			Input.mi.dy = round(CursorPos.y * YScaleFactor);
@@ -84,8 +101,8 @@ int main()
 		}
 		else if (Choice == 1)														//If user wants to autoclick at a specific pixel
 		{
-			Input.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE |			//DWORD flags
-				MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP;
+			Input.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK |		//DWORD flags
+				MOUSEEVENTF_MOVE | MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP;
 			unsigned long long Delay, Countdown, UserClicks, MouseClicks = 0,
 				CursorPosX, CursorPosY;
 			cout << "Set X pixel position of cursor (left is 0 and right is max)"
@@ -116,34 +133,48 @@ int main()
 		else if (Choice == 2)														//If user wants to autoclick wherever their cursor is
 		{
 			Input.mi.dwFlags = MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP;			//DWORD flags
-			string HotkeyStr;
-			int Hotkey;
-			cout << "Enter hex keycode of key to start clicking (full list on MSDN)\n";
-			cin >> HotkeyStr;
-			while (!(ss << hex << HotkeyStr) || !(ss >> Hotkey))					//If the entered string is invalid
+			cout << "Press any key, then hold down the key you want to use to start clicking\n";
+			_getch();
+			Sleep(500);
+			int i = 0, Hotkey;
+			for (int j = 0; ; j++)
 			{
-				cout << "Invalid Input, please try again\n";
-				stringstream().swap(ss);
-				ss.clear();
-				cin >> HotkeyStr;
+				if (GetAsyncKeyState(i) < 0)
+				{
+					Hotkey = i;
+					i = j - 1;
+					break;
+				}
+				i = VKeyList[j].VKey;
+				if (j == 177)
+				{
+					j = -1;
+				}
+				Sleep(1);
 			}
-			stringstream().swap(ss);
+			cout << VKeyList[i].Description << " is the key to start clicking\n";
 			unsigned long long Delay;
 			cout << "Set time between each click (in milliseconds)\n";
 			cin >> Delay;
-			cout << "Press " << HotkeyStr << " to start clicking\n";
+			cout << "Press " << VKeyList[i].Description << " to start clicking\n";
 			while (true)															//While user holds down key, it will click
 			{
-				while (GetAsyncKeyState(Hotkey) < 0)
+				/* if (GetAsyncKeyState(Stopkey) < 0)
+				{
+					cout << "Stopped autoclicking\n";
+					break;
+				} */
+				if (GetAsyncKeyState(Hotkey) < 0)
 				{
 					SendInput(1, &Input, sizeof(INPUT));
-					Sleep(Delay);
 				}
+				Sleep(Delay);
 			}
 		}
 		cout << "Repeat?\ny/n: ";
 		cin >> Repeat;
 	}
-	cin.get();
+	cout << "Press any key to exit\n";
+	_getch();
 	return 0;
 }
