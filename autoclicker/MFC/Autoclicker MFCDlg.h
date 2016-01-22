@@ -38,9 +38,12 @@ public:
 	afx_msg void OnBnClickedButton1();
 	CString CStr_IDC_EDIT1;
 	afx_msg void OnBnClickedButton2();
-	CString Hotkey;
-	CString Stopkey;
+	CString Hotkeystr;
+	CString Stopkeystr;
 	CString Clicktime;
 	CString Duration;
 	int ComboBoxChoice;
+	afx_msg void OnBnClickedButton3();
+	afx_msg void OnBnClickedButton4();
+	afx_msg void OnBnClickedButton5();
 };

@@ -3,6 +3,7 @@
 //
 
 #include "stdafx.h"
+#include "VirtualKeys.h"
 #include "Autoclicker MFC.h"
 #include "Autoclicker MFCDlg.h"
 #include "afxdialogex.h"
@@ -55,10 +56,10 @@ CAutoclickerMFCDlg::CAutoclickerMFCDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_AUTOCLICKERMFC_DIALOG, pParent)
 	, Radio1(0)
 	, CStr_IDC_EDIT1(_T(""))
-	, Hotkey(_T("162"))
-	, Stopkey(_T("160"))
-	, Clicktime(_T("100"))
-	, Duration(_T("50"))
+	, Hotkeystr("")
+	, Stopkeystr("")
+	, Clicktime("")
+	, Duration("")
 	, ComboBoxChoice(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
@@ -69,9 +70,9 @@ void CAutoclickerMFCDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Radio(pDX, IDC_RADIO1, Radio1);
 	DDX_Text(pDX, IDC_EDIT1, CStr_IDC_EDIT1);
-	DDX_Text(pDX, IDC_EDIT2, Hotkey);
+	DDX_Text(pDX, IDC_EDIT2, Hotkeystr);
 	//DDV_MaxChars(pDX, Hotkey, 8);
-	DDX_Text(pDX, IDC_EDIT3, Stopkey);
+	DDX_Text(pDX, IDC_EDIT3, Stopkeystr);
 	//DDV_MaxChars(pDX, Stopkey, 8);
 	DDX_Text(pDX, IDC_EDIT4, Clicktime);
 	//DDV_MaxChars(pDX, Clicktime, 8);
@@ -88,6 +89,9 @@ BEGIN_MESSAGE_MAP(CAutoclickerMFCDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_RADIO2, &CAutoclickerMFCDlg::OnBnClickedRadio2)
 	ON_BN_CLICKED(IDC_BUTTON1, &CAutoclickerMFCDlg::OnBnClickedButton1)
 	ON_BN_CLICKED(IDC_BUTTON2, &CAutoclickerMFCDlg::OnBnClickedButton2)
+	ON_BN_CLICKED(IDC_BUTTON3, &CAutoclickerMFCDlg::OnBnClickedButton3)
+	ON_BN_CLICKED(IDC_BUTTON4, &CAutoclickerMFCDlg::OnBnClickedButton4)
+	ON_BN_CLICKED(IDC_BUTTON5, &CAutoclickerMFCDlg::OnBnClickedButton5)
 END_MESSAGE_MAP()
 
 
@@ -123,6 +127,20 @@ BOOL CAutoclickerMFCDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
+	for (int i = 0; i < 177; ++i)
+	{
+		if (VKeyList[i].VKey == 162)
+		{
+			Hotkeystr = VKeyList[i].Description;
+		}
+		if (VKeyList[i].VKey == 160)
+		{
+			Stopkeystr = VKeyList[i].Description;
+		}
+	}
+	Clicktime = std::to_string(100).c_str();
+	Duration = std::to_string(50).c_str();
+	UpdateData(FALSE);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -268,3 +286,46 @@ void CAutoclickerMFCDlg::OnBnClickedButton2()
 	ClickingInfoptr->isRunning = false;
 }
 
+
+
+void CAutoclickerMFCDlg::OnBnClickedButton3()
+{
+	// TODO: Add your control notification handler code here
+}
+
+
+void CAutoclickerMFCDlg::OnBnClickedButton4()
+{
+	// TODO: Add your control notification handler code here
+}
+
+
+void CAutoclickerMFCDlg::OnBnClickedButton5()
+{
+	// TODO: Add your control notification handler code here
+	static CString clickMsgButton5 = _T("Push button 5 was pressed. ");
+	CStr_IDC_EDIT1 += clickMsgButton5;
+	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+	UpdateData(TRUE);
+	if (Duration > Clicktime)
+	{
+		CStr_IDC_EDIT1 += "Error: Duration is greater than Clicktime. ";
+		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+	}
+	int Hotkey, Stopkey;
+	for (int i = 0; i < 177; ++i)
+	{
+		if (Hotkeystr = VKeyList[i].Description)
+		{
+			Hotkey = VKeyList[i].VKey;
+		}
+		if (Stopkeystr = VKeyList[i].Description)
+		{
+			Stopkey = VKeyList[i].VKey;
+		}
+	}
+	ClickingInfoptr->Hotkey = Hotkey;
+	ClickingInfoptr->Stopkey = Stopkey;
+	ClickingInfoptr->Clicktime = _ttoi(Clicktime);
+	ClickingInfoptr->Duration = _ttoi(Duration);
+}
