@@ -9,6 +9,7 @@
 #include "afxdialogex.h"
 #include <vector>
 #include <string>
+#include <sstream>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -307,19 +308,23 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 	CStr_IDC_EDIT1 += clickMsgButton5;
 	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 	UpdateData(TRUE);
-	if (Duration > Clicktime)
+	//problem(resolved): Clicktime is using previous value when being compared to Duration and UpdateData(FALSE) is putting previous value into edit box
+	if (_ttoi(Duration) >= _ttoi(Clicktime))
 	{
-		CStr_IDC_EDIT1 += "Error: Duration is greater than Clicktime. ";
+		CStr_IDC_EDIT1 += "Error: Duration is not less than Time between clicks, changing Duration to half of Time between clicks. ";
 		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+		TCHAR *buffer = new TCHAR[30];
+		Duration = _itot(_ttoi(Clicktime) / 2, buffer, 10);
+		delete[] buffer;
 	}
 	int Hotkey, Stopkey;
 	for (int i = 0; i < 177; ++i)
 	{
-		if (Hotkeystr = VKeyList[i].Description)
+		if (Hotkeystr == VKeyList[i].Description)
 		{
 			Hotkey = VKeyList[i].VKey;
 		}
-		if (Stopkeystr = VKeyList[i].Description)
+		if (Stopkeystr == VKeyList[i].Description)
 		{
 			Stopkey = VKeyList[i].VKey;
 		}
@@ -328,4 +333,5 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 	ClickingInfoptr->Stopkey = Stopkey;
 	ClickingInfoptr->Clicktime = _ttoi(Clicktime);
 	ClickingInfoptr->Duration = _ttoi(Duration);
+	UpdateData(FALSE);
 }
