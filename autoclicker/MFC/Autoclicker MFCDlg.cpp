@@ -62,6 +62,8 @@ CAutoclickerMFCDlg::CAutoclickerMFCDlg(CWnd* pParent /*=NULL*/)
 	, Clicktime("")
 	, Duration("")
 	, ComboBoxChoice(0)
+	, XCoordstr(_T(""))
+	, YCoordstr(_T(""))
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -80,6 +82,8 @@ void CAutoclickerMFCDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT5, Duration);
 	//DDV_MaxChars(pDX, Duration, 8);
 	DDX_CBIndex(pDX, IDC_COMBO1, ComboBoxChoice);
+	DDX_Text(pDX, IDC_EDIT6, XCoordstr);
+	DDX_Text(pDX, IDC_EDIT7, YCoordstr);
 }
 
 BEGIN_MESSAGE_MAP(CAutoclickerMFCDlg, CDialogEx)
@@ -93,6 +97,7 @@ BEGIN_MESSAGE_MAP(CAutoclickerMFCDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON3, &CAutoclickerMFCDlg::OnBnClickedButton3)
 	ON_BN_CLICKED(IDC_BUTTON4, &CAutoclickerMFCDlg::OnBnClickedButton4)
 	ON_BN_CLICKED(IDC_BUTTON5, &CAutoclickerMFCDlg::OnBnClickedButton5)
+	ON_BN_CLICKED(IDC_BUTTON6, &CAutoclickerMFCDlg::OnBnClickedButton6)
 END_MESSAGE_MAP()
 
 
@@ -265,7 +270,7 @@ void CAutoclickerMFCDlg::OnBnClickedButton1()
 	UpdateData(FALSE);
 	if (ClickingInfoptr->isRunning == false)
 	{
-		CWinThread *pThread = AfxBeginThread(StartAutoclick, (LPVOID)ClickingInfoptr);
+		CWinThread *pThread = AfxBeginThread(StartAutoclick, static_cast<LPVOID>(ClickingInfoptr));
 		static CString ThreadStart1 = _T("Thread 1 has started. ");
 		CStr_IDC_EDIT1 += ThreadStart1;
 		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
@@ -317,21 +322,39 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 		Duration = _itot(_ttoi(Clicktime) / 2, buffer, 10);
 		delete[] buffer;
 	}
+	ClickingInfoptr->Clicktime = abs(_ttoi(Clicktime));
+	ClickingInfoptr->Duration = abs(_ttoi(Duration));
 	int Hotkey, Stopkey;
 	for (int i = 0; i < 177; ++i)
 	{
 		if (Hotkeystr == VKeyList[i].Description)
 		{
 			Hotkey = VKeyList[i].VKey;
+			ClickingInfoptr->Hotkey = Hotkey;
+		}
+		if (abs(_ttoi(Hotkeystr)) == VKeyList[i].VKey)
+		{
+			Hotkey = VKeyList[i].VKey;
+			ClickingInfoptr->Hotkey = Hotkey;
+			Hotkeystr = VKeyList[i].Description;
 		}
 		if (Stopkeystr == VKeyList[i].Description)
 		{
 			Stopkey = VKeyList[i].VKey;
+			ClickingInfoptr->Stopkey = Stopkey;
+		}
+		if (abs(_ttoi(Stopkeystr)) == VKeyList[i].VKey)
+		{
+			Stopkey = VKeyList[i].VKey;
+			ClickingInfoptr->Stopkey = Stopkey;
+			Stopkeystr = VKeyList[i].Description;
 		}
 	}
-	ClickingInfoptr->Hotkey = Hotkey;
-	ClickingInfoptr->Stopkey = Stopkey;
-	ClickingInfoptr->Clicktime = _ttoi(Clicktime);
-	ClickingInfoptr->Duration = _ttoi(Duration);
 	UpdateData(FALSE);
+}
+
+
+void CAutoclickerMFCDlg::OnBnClickedButton6()
+{
+	// TODO: Add your control notification handler code here
 }

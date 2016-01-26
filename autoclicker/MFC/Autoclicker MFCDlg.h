@@ -46,4 +46,7 @@ public:
 	afx_msg void OnBnClickedButton3();
 	afx_msg void OnBnClickedButton4();
 	afx_msg void OnBnClickedButton5();
+	CString XCoordstr;
+	CString YCoordstr;
+	afx_msg void OnBnClickedButton6();
 };
