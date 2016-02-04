@@ -2,11 +2,11 @@
 
 struct VKeyStruct {
 	CString Name;
-	unsigned __int8 VKey;
+	UINT VKey;
 	CString Description;
 };
 
-const VKeyStruct VKeyList[177] = {
+const VKeyStruct VKeyList[178] = {
 	{ _T("VK_LBUTTON"), 0x01, _T("Left mouse button") },
 	{ _T("VK_RBUTTON"), 0x02, _T("Right mouse button") },
 	{ _T("VK_CANCEL"), 0x03, _T("Control-break processing") },

@@ -62,8 +62,8 @@ CAutoclickerMFCDlg::CAutoclickerMFCDlg(CWnd* pParent /*=NULL*/)
 	, Clicktime("")
 	, Duration("")
 	, ComboBoxChoice(0)
-	, XCoordstr(_T(""))
-	, YCoordstr(_T(""))
+	, XCoordstr("")
+	, YCoordstr("")
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -146,6 +146,8 @@ BOOL CAutoclickerMFCDlg::OnInitDialog()
 	}
 	Clicktime = std::to_string(100).c_str();
 	Duration = std::to_string(50).c_str();
+	XCoordstr = _T("0");
+	YCoordstr = _T("0");
 	UpdateData(FALSE);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
@@ -249,6 +251,11 @@ void CAutoclickerMFCDlg::OnBnClickedRadio1()
 	static CString clickMsgRadio1 = _T("Radio button 1 was pressed. ");
 	CStr_IDC_EDIT1 += clickMsgRadio1;
 	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+	GetDlgItem(IDC_EDIT6)->EnableWindow(FALSE);
+	GetDlgItem(IDC_EDIT7)->EnableWindow(FALSE);
+	static CString disablecoordbox = _T("X and Y coordinate boxes disabled. ");
+	CStr_IDC_EDIT1 += disablecoordbox;
+	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 }
 
 
@@ -257,6 +264,11 @@ void CAutoclickerMFCDlg::OnBnClickedRadio2()
 	// TODO: Add your control notification handler code here
 	static CString clickMsgRadio2 = _T("Radio button 2 was pressed. ");
 	CStr_IDC_EDIT1 += clickMsgRadio2;
+	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+	GetDlgItem(IDC_EDIT6)->EnableWindow(TRUE);
+	GetDlgItem(IDC_EDIT7)->EnableWindow(TRUE);
+	static CString enablecoordbox = _T("X and Y coordinate boxes enabled. ");
+	CStr_IDC_EDIT1 += enablecoordbox;
 	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 }
 
@@ -313,7 +325,6 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 	CStr_IDC_EDIT1 += clickMsgButton5;
 	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 	UpdateData(TRUE);
-	//problem(resolved): Clicktime is using previous value when being compared to Duration and UpdateData(FALSE) is putting previous value into edit box
 	if (_ttoi(Duration) >= _ttoi(Clicktime))
 	{
 		CStr_IDC_EDIT1 += "Error: Duration is not less than Time between clicks, changing Duration to half of Time between clicks. ";
@@ -327,27 +338,50 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 	int Hotkey, Stopkey;
 	for (int i = 0; i < 177; ++i)
 	{
+		
 		if (Hotkeystr == VKeyList[i].Description)
 		{
 			Hotkey = VKeyList[i].VKey;
 			ClickingInfoptr->Hotkey = Hotkey;
+			break;
 		}
-		if (abs(_ttoi(Hotkeystr)) == VKeyList[i].VKey)
+		else if (abs(_ttoi(Hotkeystr)) == VKeyList[i].VKey)
 		{
 			Hotkey = VKeyList[i].VKey;
 			ClickingInfoptr->Hotkey = Hotkey;
 			Hotkeystr = VKeyList[i].Description;
+			break;
 		}
+		if (i == 176)
+		{
+			static CString nomatchmsg1 = _T("Hotkey was not assigned, check key spelling. ");
+			CStr_IDC_EDIT1 += nomatchmsg1;
+			SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+			break;
+		}
+	}
+	for (int i = 0; i < 177; ++i)
+	{
+		
 		if (Stopkeystr == VKeyList[i].Description)
 		{
 			Stopkey = VKeyList[i].VKey;
 			ClickingInfoptr->Stopkey = Stopkey;
+			break;
 		}
-		if (abs(_ttoi(Stopkeystr)) == VKeyList[i].VKey)
+		else if (abs(_ttoi(Stopkeystr)) == VKeyList[i].VKey)
 		{
 			Stopkey = VKeyList[i].VKey;
 			ClickingInfoptr->Stopkey = Stopkey;
 			Stopkeystr = VKeyList[i].Description;
+			break;
+		}
+		if (i == 176)
+		{
+			static CString nomatchmsg2 = _T("Stopkey was not assigned, check key spelling. ");
+			CStr_IDC_EDIT1 += nomatchmsg2;
+			SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+			break;
 		}
 	}
 	UpdateData(FALSE);
@@ -357,4 +391,7 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 void CAutoclickerMFCDlg::OnBnClickedButton6()
 {
 	// TODO: Add your control notification handler code here
+	static CString clickMsgButton6 = _T("Push button 6 was pressed. ");
+	CStr_IDC_EDIT1 += clickMsgButton6;
+	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 }

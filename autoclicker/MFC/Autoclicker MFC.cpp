@@ -15,6 +15,8 @@
 
 BEGIN_MESSAGE_MAP(CAutoclickerMFCApp, CWinApp)
 	ON_COMMAND(ID_HELP, &CWinApp::OnHelp)
+	ON_COMMAND(ID_FILE_QUIT32772, &CAutoclickerMFCApp::OnFileQuit32772)
+	ON_COMMAND(ID_HELP_ABOUT, &CAutoclickerMFCApp::OnHelpAbout)
 END_MESSAGE_MAP()
 
 
@@ -88,3 +90,16 @@ BOOL CAutoclickerMFCApp::InitInstance()
 	return FALSE;
 }
 
+
+
+void CAutoclickerMFCApp::OnFileQuit32772()
+{
+	// TODO: Add your command handler code here
+	PostQuitMessage(0);
+}
+
+
+void CAutoclickerMFCApp::OnHelpAbout()
+{
+	// TODO: Add your command handler code here
+}

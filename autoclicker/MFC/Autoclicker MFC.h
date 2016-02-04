@@ -27,6 +27,8 @@ public:
 // Implementation
 
 	DECLARE_MESSAGE_MAP()
+	afx_msg void OnFileQuit32772();
+	afx_msg void OnHelpAbout();
 };
 
 extern CAutoclickerMFCApp theApp;
