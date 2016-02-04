@@ -1,1 +1,1 @@
-A folder for some scrap code that I write for fun
+A folder for code that I write for fun
