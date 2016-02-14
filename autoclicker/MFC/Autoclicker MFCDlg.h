@@ -32,7 +32,7 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
-	int Radio1;
+	INT RadioChoice;
 	afx_msg void OnBnClickedRadio1();
 	afx_msg void OnBnClickedRadio2();
 	afx_msg void OnBnClickedButton1();
@@ -40,9 +40,9 @@ public:
 	afx_msg void OnBnClickedButton2();
 	CString Hotkeystr;
 	CString Stopkeystr;
-	CString Clicktime;
-	CString Duration;
-	int ComboBoxChoice;
+	CString Clicktimestr;
+	CString Durationstr;
+	INT ComboBoxChoice;
 	afx_msg void OnBnClickedButton3();
 	afx_msg void OnBnClickedButton4();
 	afx_msg void OnBnClickedButton5();

@@ -102,6 +102,7 @@ void CAutoclickerMFCApp::OnFileQuit32772()
 void CAutoclickerMFCApp::OnHelpAbout()
 {
 	// TODO: Add your command handler code here
+
 }
 
 

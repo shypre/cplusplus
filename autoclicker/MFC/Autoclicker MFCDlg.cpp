@@ -55,12 +55,12 @@ END_MESSAGE_MAP()
 
 CAutoclickerMFCDlg::CAutoclickerMFCDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_AUTOCLICKERMFC_DIALOG, pParent)
-	, Radio1(0)
+	, RadioChoice(0)
 	, CStr_IDC_EDIT1(_T(""))
 	, Hotkeystr("")
 	, Stopkeystr("")
-	, Clicktime("")
-	, Duration("")
+	, Clicktimestr("")
+	, Durationstr("")
 	, ComboBoxChoice(0)
 	, XCoordstr("")
 	, YCoordstr("")
@@ -71,16 +71,16 @@ CAutoclickerMFCDlg::CAutoclickerMFCDlg(CWnd* pParent /*=NULL*/)
 void CAutoclickerMFCDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Radio(pDX, IDC_RADIO1, Radio1);
+	DDX_Radio(pDX, IDC_RADIO1, RadioChoice);
 	DDX_Text(pDX, IDC_EDIT1, CStr_IDC_EDIT1);
 	DDX_Text(pDX, IDC_EDIT2, Hotkeystr);
 	//DDV_MaxChars(pDX, Hotkey, 8);
 	DDX_Text(pDX, IDC_EDIT3, Stopkeystr);
 	//DDV_MaxChars(pDX, Stopkey, 8);
-	DDX_Text(pDX, IDC_EDIT4, Clicktime);
-	//DDV_MaxChars(pDX, Clicktime, 8);
-	DDX_Text(pDX, IDC_EDIT5, Duration);
-	//DDV_MaxChars(pDX, Duration, 8);
+	DDX_Text(pDX, IDC_EDIT4, Clicktimestr);
+	//DDV_MaxChars(pDX, Clicktimestr, 8);
+	DDX_Text(pDX, IDC_EDIT5, Durationstr);
+	//DDV_MaxChars(pDX, Durationstr, 8);
 	DDX_CBIndex(pDX, IDC_COMBO1, ComboBoxChoice);
 	DDX_Text(pDX, IDC_EDIT6, XCoordstr);
 	DDX_Text(pDX, IDC_EDIT7, YCoordstr);
@@ -144,8 +144,8 @@ BOOL CAutoclickerMFCDlg::OnInitDialog()
 			Stopkeystr = VKeyList[i].Description;
 		}
 	}
-	Clicktime = std::to_string(100).c_str();
-	Duration = std::to_string(50).c_str();
+	Clicktimestr = _T("100");
+	Durationstr = _T("50");
 	XCoordstr = _T("0");
 	YCoordstr = _T("0");
 	UpdateData(FALSE);
@@ -207,12 +207,9 @@ typedef struct ClickingInfoStruct
 {
 	INPUT Input { 0 };
 	volatile BOOL isRunning = FALSE;
-	UINT Hotkey = 0xA2;
-	UINT Stopkey = 0xA0;
-	UINT Clicktime = 100;
+	UINT Hotkey = 0xA2, Stopkey = 0xA0, Clicktime = 100;
 	INT Duration = 50;
-	DWORD InputFlags1 = MOUSEEVENTF_LEFTDOWN;
-	DWORD InputFlags2 = MOUSEEVENTF_LEFTUP;
+	DWORD InputFlags1 = MOUSEEVENTF_LEFTDOWN, InputFlags2 = MOUSEEVENTF_LEFTUP;
 } ClickingInfo;
 
 static ClickingInfo *ClickingInfoptr = new ClickingInfo;
@@ -244,10 +241,18 @@ static UINT StartAutoclick(LPVOID pParam)
 				SendInput(1, &(theParam->Input), sizeof(INPUT));
 			}
 		}
-		Sleep(theParam->Clicktime - theParam->Duration);
+		if (theParam->InputFlags2 != 0)
+		{
+			Sleep(theParam->Clicktime - theParam->Duration);
+		}
+		else
+		{
+			Sleep(theParam->Clicktime);
+		}
 	}
 	static CString msgboxstr1 = _T("Thread 1 has finished");
 	AfxMessageBox(msgboxstr1);
+	theParam->isRunning = FALSE;
 	return 0;
 }
 
@@ -296,7 +301,7 @@ void CAutoclickerMFCDlg::OnBnClickedButton1()
 	}
 	else
 	{
-		CString msgboxstr2 = _T("Thread 1 is already running!");
+		static CString msgboxstr2 = _T("Thread 1 is already running!");
 		AfxMessageBox(msgboxstr2);
 	}
 }
@@ -332,20 +337,19 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 	CStr_IDC_EDIT1 += clickMsgButton5;
 	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 	UpdateData(TRUE);
-	if (_ttoi(Duration) >= _ttoi(Clicktime) && (ComboBoxChoice != 2))
+	if (_ttoi(Durationstr) >= _ttoi(Clicktimestr) && ComboBoxChoice != 2)
 	{
-		CStr_IDC_EDIT1 += "Error: Duration is not less than Time between clicks, changing Duration to half of Time between clicks. ";
+		CStr_IDC_EDIT1 += "Error: Duration is not less than Clicktime, changing Duration to half of Clicktime. ";
 		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 		TCHAR *buffer = new TCHAR[30];
-		Duration = _itot(_ttoi(Clicktime) / 2, buffer, 10);
+		Durationstr = _itot(_ttoi(Clicktimestr) / 2, buffer, 10);
 		delete[] buffer;
 	}
-	ClickingInfoptr->Clicktime = abs(_ttoi(Clicktime));
-	ClickingInfoptr->Duration = _ttoi(Duration);
+	ClickingInfoptr->Clicktime = abs(_ttoi(Clicktimestr));
+	ClickingInfoptr->Duration = _ttoi(Durationstr);
 	UINT Hotkey, Stopkey;
 	for (int i = 0; i < 177; ++i)
 	{
-		
 		if (Hotkeystr == VKeyList[i].Description)
 		{
 			Hotkey = VKeyList[i].VKey;
@@ -369,7 +373,6 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 	}
 	for (int i = 0; i < 177; ++i)
 	{
-		
 		if (Stopkeystr == VKeyList[i].Description)
 		{
 			Stopkey = VKeyList[i].VKey;
@@ -391,6 +394,11 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 			break;
 		}
 	}
+	if (RadioChoice == 0)
+	{
+		ClickingInfoptr->InputFlags1 = 0;
+		ClickingInfoptr->InputFlags2 = 0;
+	}
 	if (ComboBoxChoice == 0)
 	{
 		ClickingInfoptr->InputFlags1 = MOUSEEVENTF_LEFTDOWN;
@@ -405,6 +413,13 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 	{
 		ClickingInfoptr->InputFlags1 = MOUSEEVENTF_WHEEL;
 		ClickingInfoptr->InputFlags2 = 0;
+	}
+	if (RadioChoice == 1)
+	{
+		ClickingInfoptr->InputFlags1 += MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_VIRTUALDESK;
+		ClickingInfoptr->InputFlags2 += MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_VIRTUALDESK;
+		ClickingInfoptr->Input.mi.dx = _ttol(XCoordstr);
+		ClickingInfoptr->Input.mi.dy = _ttol(YCoordstr);
 	}
 	UpdateData(FALSE);
 }
