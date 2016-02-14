@@ -206,11 +206,11 @@ HCURSOR CAutoclickerMFCDlg::OnQueryDragIcon()
 typedef struct ClickingInfoStruct
 {
 	INPUT Input { 0 };
-	volatile bool isRunning = false;
-	int Hotkey = 0xA2;
-	int Stopkey = 0xA0;
-	int Clicktime = 100;
-	int Duration = 50;
+	volatile BOOL isRunning = FALSE;
+	UINT Hotkey = 0xA2;
+	UINT Stopkey = 0xA0;
+	UINT Clicktime = 100;
+	INT Duration = 50;
 	DWORD InputFlags1 = MOUSEEVENTF_LEFTDOWN;
 	DWORD InputFlags2 = MOUSEEVENTF_LEFTUP;
 } ClickingInfo;
@@ -221,9 +221,9 @@ static ClickingInfo *ClickingInfoptr = new ClickingInfo;
 static UINT StartAutoclick(LPVOID pParam)
 {
 	static ClickingInfo *theParam = static_cast<ClickingInfo*> (pParam);
-	theParam->isRunning = true;
+	theParam->isRunning = TRUE;
 	ZeroMemory(&(theParam->Input), sizeof(theParam->Input));
-	while (theParam->isRunning == true)
+	while (theParam->isRunning == TRUE)
 	{
 		if (GetAsyncKeyState(theParam->Stopkey) < 0)
 		{
@@ -231,11 +231,18 @@ static UINT StartAutoclick(LPVOID pParam)
 		}
 		if (GetAsyncKeyState(theParam->Hotkey) < 0)
 		{
+			if (theParam->InputFlags2 == 0)
+			{
+				theParam->Input.mi.mouseData = theParam->Duration;
+			}
 			theParam->Input.mi.dwFlags = theParam->InputFlags1;
 			SendInput(1, &(theParam->Input), sizeof(INPUT));
-			Sleep(theParam->Clicktime);
-			theParam->Input.mi.dwFlags = theParam->InputFlags2;
-			SendInput(1, &(theParam->Input), sizeof(INPUT));
+			if (theParam->InputFlags2 != 0)
+			{
+				Sleep(theParam->Clicktime);
+				theParam->Input.mi.dwFlags = theParam->InputFlags2;
+				SendInput(1, &(theParam->Input), sizeof(INPUT));
+			}
 		}
 		Sleep(theParam->Clicktime - theParam->Duration);
 	}
@@ -280,7 +287,7 @@ void CAutoclickerMFCDlg::OnBnClickedButton1()
 	CStr_IDC_EDIT1 += clickMsgButton1;
 	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 	UpdateData(FALSE);
-	if (ClickingInfoptr->isRunning == false)
+	if (ClickingInfoptr->isRunning == FALSE)
 	{
 		CWinThread *pThread = AfxBeginThread(StartAutoclick, static_cast<LPVOID>(ClickingInfoptr));
 		static CString ThreadStart1 = _T("Thread 1 has started. ");
@@ -301,7 +308,7 @@ void CAutoclickerMFCDlg::OnBnClickedButton2()
 	static CString clickMsgButton2 = _T("Push button 2 was pressed. ");
 	CStr_IDC_EDIT1 += clickMsgButton2;
 	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-	ClickingInfoptr->isRunning = false;
+	ClickingInfoptr->isRunning = FALSE;
 }
 
 
@@ -325,7 +332,7 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 	CStr_IDC_EDIT1 += clickMsgButton5;
 	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 	UpdateData(TRUE);
-	if (_ttoi(Duration) >= _ttoi(Clicktime))
+	if (_ttoi(Duration) >= _ttoi(Clicktime) && (ComboBoxChoice != 2))
 	{
 		CStr_IDC_EDIT1 += "Error: Duration is not less than Time between clicks, changing Duration to half of Time between clicks. ";
 		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
@@ -334,8 +341,8 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 		delete[] buffer;
 	}
 	ClickingInfoptr->Clicktime = abs(_ttoi(Clicktime));
-	ClickingInfoptr->Duration = abs(_ttoi(Duration));
-	int Hotkey, Stopkey;
+	ClickingInfoptr->Duration = _ttoi(Duration);
+	UINT Hotkey, Stopkey;
 	for (int i = 0; i < 177; ++i)
 	{
 		
@@ -383,6 +390,21 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 			SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 			break;
 		}
+	}
+	if (ComboBoxChoice == 0)
+	{
+		ClickingInfoptr->InputFlags1 = MOUSEEVENTF_LEFTDOWN;
+		ClickingInfoptr->InputFlags2 = MOUSEEVENTF_LEFTUP;
+	}
+	else if (ComboBoxChoice == 1)
+	{
+		ClickingInfoptr->InputFlags1 = MOUSEEVENTF_RIGHTDOWN;
+		ClickingInfoptr->InputFlags2 = MOUSEEVENTF_RIGHTUP;
+	}
+	else if (ComboBoxChoice == 2)
+	{
+		ClickingInfoptr->InputFlags1 = MOUSEEVENTF_WHEEL;
+		ClickingInfoptr->InputFlags2 = 0;
 	}
 	UpdateData(FALSE);
 }

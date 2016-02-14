@@ -103,3 +103,17 @@ void CAutoclickerMFCApp::OnHelpAbout()
 {
 	// TODO: Add your command handler code here
 }
+
+
+//Prevents escape or enter key closing the window by overriding PreTranslateMessage (solution from stackoverflow)
+BOOL CAutoclickerMFCApp::PreTranslateMessage(MSG* pMsg)
+{
+	if (pMsg->message == WM_KEYDOWN)
+	{
+		if (pMsg->wParam == VK_RETURN || pMsg->wParam == VK_ESCAPE)
+		{
+			return TRUE;
+		}
+	}
+	return CWinApp::PreTranslateMessage(pMsg);
+}
