@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <sstream>
 
 // CAutoclickerMFCDlg dialog
 class CAutoclickerMFCDlg : public CDialogEx
@@ -49,4 +50,6 @@ public:
 	CString XCoordstr;
 	CString YCoordstr;
 	afx_msg void OnBnClickedButton6();
+	DOUBLE ScreenResX, ScreenResY, XScaleFactor, YScaleFactor;
+	std::stringstream ss;
 };

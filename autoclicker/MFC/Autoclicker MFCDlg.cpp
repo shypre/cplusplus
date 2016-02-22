@@ -9,7 +9,6 @@
 #include "afxdialogex.h"
 #include <vector>
 #include <string>
-#include <sstream>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -133,6 +132,10 @@ BOOL CAutoclickerMFCDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
+	ScreenResX = GetSystemMetrics(SM_CXSCREEN);
+	ScreenResY = GetSystemMetrics(SM_CYSCREEN);
+	XScaleFactor = 65535 / ScreenResX;
+	YScaleFactor = 65535 / ScreenResY;
 	for (int i = 0; i < 177; ++i)
 	{
 		if (VKeyList[i].VKey == 162)
@@ -148,6 +151,8 @@ BOOL CAutoclickerMFCDlg::OnInitDialog()
 	Durationstr = _T("50");
 	XCoordstr = _T("0");
 	YCoordstr = _T("0");
+	RadioChoice = 0;
+	ComboBoxChoice = 0;
 	UpdateData(FALSE);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
@@ -337,13 +342,11 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 	CStr_IDC_EDIT1 += clickMsgButton5;
 	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 	UpdateData(TRUE);
-	if (_ttoi(Durationstr) >= _ttoi(Clicktimestr) && ComboBoxChoice != 2)
+	if (_ttoi(Durationstr) >= _ttoi(Clicktimestr) && ComboBoxChoice != 3)
 	{
 		CStr_IDC_EDIT1 += "Error: Duration is not less than Clicktime, changing Duration to half of Clicktime. ";
 		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-		TCHAR *buffer = new TCHAR[30];
-		Durationstr = _itot(_ttoi(Clicktimestr) / 2, buffer, 10);
-		delete[] buffer;
+		Durationstr = std::to_string(_ttoi(Clicktimestr) / 2).c_str();
 	}
 	ClickingInfoptr->Clicktime = abs(_ttoi(Clicktimestr));
 	ClickingInfoptr->Duration = _ttoi(Durationstr);
@@ -411,6 +414,11 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 	}
 	else if (ComboBoxChoice == 2)
 	{
+		ClickingInfoptr->InputFlags1 = MOUSEEVENTF_MIDDLEDOWN;
+		ClickingInfoptr->InputFlags2 = MOUSEEVENTF_MIDDLEUP;
+	}
+	else if (ComboBoxChoice == 3)
+	{
 		ClickingInfoptr->InputFlags1 = MOUSEEVENTF_WHEEL;
 		ClickingInfoptr->InputFlags2 = 0;
 	}
@@ -418,8 +426,8 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 	{
 		ClickingInfoptr->InputFlags1 += MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_VIRTUALDESK;
 		ClickingInfoptr->InputFlags2 += MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_VIRTUALDESK;
-		ClickingInfoptr->Input.mi.dx = _ttol(XCoordstr);
-		ClickingInfoptr->Input.mi.dy = _ttol(YCoordstr);
+		ClickingInfoptr->Input.mi.dx = _ttol(XCoordstr) * XScaleFactor;
+		ClickingInfoptr->Input.mi.dy = _ttol(YCoordstr) * YScaleFactor;
 	}
 	UpdateData(FALSE);
 }
@@ -431,4 +439,23 @@ void CAutoclickerMFCDlg::OnBnClickedButton6()
 	static CString clickMsgButton6 = _T("Push button 6 was pressed. ");
 	CStr_IDC_EDIT1 += clickMsgButton6;
 	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+	for (int i = 0; i < 177; ++i)
+	{
+		if (VKeyList[i].VKey == 162)
+		{
+			Hotkeystr = VKeyList[i].Description;
+		}
+		if (VKeyList[i].VKey == 160)
+		{
+			Stopkeystr = VKeyList[i].Description;
+		}
+	}
+	Clicktimestr = _T("100");
+	Durationstr = _T("50");
+	XCoordstr = _T("0");
+	YCoordstr = _T("0");
+	RadioChoice = 0;
+	ComboBoxChoice = 0;
+	UpdateData(FALSE);
+	CAutoclickerMFCDlg::OnBnClickedButton5();
 }
