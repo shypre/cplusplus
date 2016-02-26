@@ -41,6 +41,8 @@ public:
 	afx_msg void OnBnClickedButton2();
 	CString Hotkeystr;
 	CString Stopkeystr;
+	CString *Hotkeystrptr;
+	CString *Stopkeystrptr;
 	CString Clicktimestr;
 	CString Durationstr;
 	INT ComboBoxChoice;
@@ -52,4 +54,7 @@ public:
 	afx_msg void OnBnClickedButton6();
 	DOUBLE ScreenResX, ScreenResY, XScaleFactor, YScaleFactor;
 	std::stringstream ss;
+	afx_msg void OnBnClickedButton7();
+	afx_msg void OnCbnSelchangeCombo1();
+	BOOL Bindstart, Bindstop;
 };

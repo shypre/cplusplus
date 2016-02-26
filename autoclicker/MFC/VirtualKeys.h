@@ -34,7 +34,7 @@ const VKeyStruct VKeyList[178] = {
 	{ _T("VK_HANJA"), 0x19, _T("IME Hanja mode") },
 	{ _T("VK_KANJI"), 0x19, _T("IME Kanji mode") },
 	//{ _T("-"), 0x1A, _T("Undefined") },
-	{ _T("VK_ESCAPE"), 0x1B, _T("ESC key") },
+	//{ _T("VK_ESCAPE"), 0x1B, _T("ESC key") },    Not included due to escape being universal break key
 	{ _T("VK_CONVERT"), 0x1C, _T("IME convert") },
 	{ _T("VK_NONCONVERT"), 0x1D, _T("IME nonconvert") },
 	{ _T("VK_ACCEPT"), 0x1E, _T("IME accept") },

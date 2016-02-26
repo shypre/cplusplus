@@ -97,6 +97,8 @@ BEGIN_MESSAGE_MAP(CAutoclickerMFCDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON4, &CAutoclickerMFCDlg::OnBnClickedButton4)
 	ON_BN_CLICKED(IDC_BUTTON5, &CAutoclickerMFCDlg::OnBnClickedButton5)
 	ON_BN_CLICKED(IDC_BUTTON6, &CAutoclickerMFCDlg::OnBnClickedButton6)
+	ON_BN_CLICKED(IDC_BUTTON7, &CAutoclickerMFCDlg::OnBnClickedButton7)
+	ON_CBN_SELCHANGE(IDC_COMBO1, &CAutoclickerMFCDlg::OnCbnSelchangeCombo1)
 END_MESSAGE_MAP()
 
 
@@ -136,7 +138,7 @@ BOOL CAutoclickerMFCDlg::OnInitDialog()
 	ScreenResY = GetSystemMetrics(SM_CYSCREEN);
 	XScaleFactor = 65535 / ScreenResX;
 	YScaleFactor = 65535 / ScreenResY;
-	for (int i = 0; i < 177; ++i)
+	for (int i = 0; i < 176; ++i)
 	{
 		if (VKeyList[i].VKey == 162)
 		{
@@ -153,6 +155,10 @@ BOOL CAutoclickerMFCDlg::OnInitDialog()
 	YCoordstr = _T("0");
 	RadioChoice = 0;
 	ComboBoxChoice = 0;
+	Bindstart = FALSE;
+	Bindstop = FALSE;
+	Hotkeystrptr = &Hotkeystr;
+	Stopkeystrptr = &Stopkeystr;
 	UpdateData(FALSE);
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
@@ -262,6 +268,24 @@ static UINT StartAutoclick(LPVOID pParam)
 }
 
 
+static UINT GetKeyBind(LPVOID pParam)
+{
+	CString *Hotkeystr = static_cast<CString*>(pParam);
+	while (true)
+	{
+		for (int i = 0; i < 176; ++i)
+		{
+			if (GetAsyncKeyState(VKeyList[i].VKey < 0))
+			{
+				*Hotkeystr = VKeyList[i].Description;
+			}
+		}
+		Sleep(100);
+	}
+	return 0;
+}
+
+
 void CAutoclickerMFCDlg::OnBnClickedRadio1()
 {
 	// TODO: Add your control notification handler code here
@@ -299,7 +323,7 @@ void CAutoclickerMFCDlg::OnBnClickedButton1()
 	UpdateData(FALSE);
 	if (ClickingInfoptr->isRunning == FALSE)
 	{
-		CWinThread *pThread = AfxBeginThread(StartAutoclick, static_cast<LPVOID>(ClickingInfoptr));
+		CWinThread *pThread1 = AfxBeginThread(StartAutoclick, static_cast<LPVOID>(ClickingInfoptr));
 		static CString ThreadStart1 = _T("Thread 1 has started. ");
 		CStr_IDC_EDIT1 += ThreadStart1;
 		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
@@ -318,20 +342,60 @@ void CAutoclickerMFCDlg::OnBnClickedButton2()
 	static CString clickMsgButton2 = _T("Push button 2 was pressed. ");
 	CStr_IDC_EDIT1 += clickMsgButton2;
 	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-	ClickingInfoptr->isRunning = FALSE;
+	if (ClickingInfoptr->isRunning == TRUE)
+	{
+		static CString ThreadStop1 = _T("Stopping thread 1. ");
+		CStr_IDC_EDIT1 += ThreadStop1;
+		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+		ClickingInfoptr->isRunning = FALSE;
+	}
+	else
+	{
+		static CString ThreadStopped1 = _T("Thread 1 not running. ");
+		CStr_IDC_EDIT1 += ThreadStopped1;
+		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+	}
 }
-
 
 
 void CAutoclickerMFCDlg::OnBnClickedButton3()
 {
 	// TODO: Add your control notification handler code here
+	static CString clickMsgButton3 = _T("Push button 3 was pressed. ");
+	CStr_IDC_EDIT1 += clickMsgButton3;
+	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+	if (ClickingInfoptr->isRunning == TRUE)
+	{
+		static CString Thread1active = _T("Thread 1 is running, stop it then try again. ");
+		CStr_IDC_EDIT1 += Thread1active;
+		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+		return;
+	}
+	if (Bindstart == FALSE)
+	{
+		static CString bindstartmsg = _T("Press and hold down any key to bind as Start key, press again to cancel. ");
+		CStr_IDC_EDIT1 += bindstartmsg;
+		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+		Sleep(200);
+		Bindstart = TRUE;
+		CWinThread *pThread2 = AfxBeginThread(GetKeyBind, static_cast<LPVOID>(Hotkeystrptr));
+	}
+	else
+	{
+		Bindstart = FALSE;
+		static CString bindstopmsg = _T("Binding Start key cancelled. ");
+		CStr_IDC_EDIT1 += bindstopmsg;
+		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+	}
 }
 
 
 void CAutoclickerMFCDlg::OnBnClickedButton4()
 {
 	// TODO: Add your control notification handler code here
+	static CString clickMsgButton4 = _T("Push button 4 was pressed. ");
+	CStr_IDC_EDIT1 += clickMsgButton4;
+	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 }
 
 
@@ -350,23 +414,20 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 	}
 	ClickingInfoptr->Clicktime = abs(_ttoi(Clicktimestr));
 	ClickingInfoptr->Duration = _ttoi(Durationstr);
-	UINT Hotkey, Stopkey;
-	for (int i = 0; i < 177; ++i)
+	for (int i = 0; i < 176; ++i)
 	{
 		if (Hotkeystr == VKeyList[i].Description)
 		{
-			Hotkey = VKeyList[i].VKey;
-			ClickingInfoptr->Hotkey = Hotkey;
+			ClickingInfoptr->Hotkey = VKeyList[i].VKey;
 			break;
 		}
 		else if (abs(_ttoi(Hotkeystr)) == VKeyList[i].VKey)
 		{
-			Hotkey = VKeyList[i].VKey;
-			ClickingInfoptr->Hotkey = Hotkey;
+			ClickingInfoptr->Hotkey = VKeyList[i].VKey;
 			Hotkeystr = VKeyList[i].Description;
 			break;
 		}
-		if (i == 176)
+		if (i == 175)
 		{
 			static CString nomatchmsg1 = _T("Hotkey was not assigned, check key spelling. ");
 			CStr_IDC_EDIT1 += nomatchmsg1;
@@ -374,22 +435,20 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 			break;
 		}
 	}
-	for (int i = 0; i < 177; ++i)
+	for (int i = 0; i < 176; ++i)
 	{
 		if (Stopkeystr == VKeyList[i].Description)
 		{
-			Stopkey = VKeyList[i].VKey;
-			ClickingInfoptr->Stopkey = Stopkey;
+			ClickingInfoptr->Stopkey = VKeyList[i].VKey;
 			break;
 		}
 		else if (abs(_ttoi(Stopkeystr)) == VKeyList[i].VKey)
 		{
-			Stopkey = VKeyList[i].VKey;
-			ClickingInfoptr->Stopkey = Stopkey;
+			ClickingInfoptr->Stopkey = VKeyList[i].VKey;
 			Stopkeystr = VKeyList[i].Description;
 			break;
 		}
-		if (i == 176)
+		if (i == 175)
 		{
 			static CString nomatchmsg2 = _T("Stopkey was not assigned, check key spelling. ");
 			CStr_IDC_EDIT1 += nomatchmsg2;
@@ -439,7 +498,7 @@ void CAutoclickerMFCDlg::OnBnClickedButton6()
 	static CString clickMsgButton6 = _T("Push button 6 was pressed. ");
 	CStr_IDC_EDIT1 += clickMsgButton6;
 	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-	for (int i = 0; i < 177; ++i)
+	for (int i = 0; i < 176; ++i)
 	{
 		if (VKeyList[i].VKey == 162)
 		{
@@ -458,4 +517,35 @@ void CAutoclickerMFCDlg::OnBnClickedButton6()
 	ComboBoxChoice = 0;
 	UpdateData(FALSE);
 	CAutoclickerMFCDlg::OnBnClickedButton5();
+}
+
+
+void CAutoclickerMFCDlg::OnBnClickedButton7()
+{
+	// TODO: Add your control notification handler code here
+	static CString clickMsgButton7 = _T("Push button 7 was pressed. ");
+	CStr_IDC_EDIT1 += clickMsgButton7;
+	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+	if (ComboBoxChoice == 3)
+	{
+		GetDlgItemText(IDC_EDIT5, Durationstr);
+		Durationstr = std::to_string(_ttoi(Durationstr) * -1).c_str();
+		SetDlgItemText(IDC_EDIT5, Durationstr);
+	}
+	else
+	{
+		static CString reverseerror = _T("Mouse button to simulate must be mouse wheel to reverse direction. ");
+		CStr_IDC_EDIT1 += reverseerror;
+		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+	}
+}
+
+
+void CAutoclickerMFCDlg::OnCbnSelchangeCombo1()
+{
+	// TODO: Add your control notification handler code here
+	static CString ComboBoxSel = _T("Combobox selection changed. ");
+	CStr_IDC_EDIT1 += ComboBoxSel;
+	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+	UpdateData(TRUE);
 }
