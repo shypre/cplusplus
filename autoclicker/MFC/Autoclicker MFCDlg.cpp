@@ -14,6 +14,9 @@
 #define new DEBUG_NEW
 #endif
 
+// Used for communication between threads and main window
+#define HOTKEYMSG 0x8410
+#define STOPKEYMSG 0x8411
 
 // CAboutDlg dialog used for App About
 
@@ -89,6 +92,9 @@ BEGIN_MESSAGE_MAP(CAutoclickerMFCDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	/* DOESNT WORK YET
+	ON_MESSAGE(HOTKEYMSG, Hotkeymsg)
+	ON_MESSAGE(STOPKEYMSG, Stopkeymsg) */
 	ON_BN_CLICKED(IDC_RADIO1, &CAutoclickerMFCDlg::OnBnClickedRadio1)
 	ON_BN_CLICKED(IDC_RADIO2, &CAutoclickerMFCDlg::OnBnClickedRadio2)
 	ON_BN_CLICKED(IDC_BUTTON1, &CAutoclickerMFCDlg::OnBnClickedButton1)
@@ -270,7 +276,8 @@ static UINT StartAutoclick(LPVOID pParam)
 
 static UINT GetKeyBind(LPVOID pParam)
 {
-	CString *Hotkeystr = static_cast<CString*>(pParam);
+	HWND MainWindowHWND = static_cast<HWND>(pParam);
+	CString *Hotkeystr = new CString;
 	while (true)
 	{
 		for (int i = 0; i < 176; ++i)
@@ -278,6 +285,10 @@ static UINT GetKeyBind(LPVOID pParam)
 			if (GetAsyncKeyState(VKeyList[i].VKey < 0))
 			{
 				*Hotkeystr = VKeyList[i].Description;
+				static CString msgboxstr2 = _T("Thread 2 has finished");
+				AfxMessageBox(msgboxstr2);
+				PostMessage(MainWindowHWND, HOTKEYMSG, reinterpret_cast<WPARAM>(Hotkeystr), 0);
+				return 0;
 			}
 		}
 		Sleep(100);
@@ -323,7 +334,7 @@ void CAutoclickerMFCDlg::OnBnClickedButton1()
 	UpdateData(FALSE);
 	if (ClickingInfoptr->isRunning == FALSE)
 	{
-		CWinThread *pThread1 = AfxBeginThread(StartAutoclick, static_cast<LPVOID>(ClickingInfoptr));
+		CWinThread *pClickThread = AfxBeginThread(StartAutoclick, ClickingInfoptr);
 		static CString ThreadStart1 = _T("Thread 1 has started. ");
 		CStr_IDC_EDIT1 += ThreadStart1;
 		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
@@ -373,12 +384,11 @@ void CAutoclickerMFCDlg::OnBnClickedButton3()
 	}
 	if (Bindstart == FALSE)
 	{
-		static CString bindstartmsg = _T("Press and hold down any key to bind as Start key, press again to cancel. ");
+		static CString bindstartmsg = _T("Press any key to bind as Start key, press escape or either bind button to cancel. ");
 		CStr_IDC_EDIT1 += bindstartmsg;
 		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-		Sleep(200);
 		Bindstart = TRUE;
-		CWinThread *pThread2 = AfxBeginThread(GetKeyBind, static_cast<LPVOID>(Hotkeystrptr));
+		CWinThread *pBindThread1 = AfxBeginThread(GetKeyBind, static_cast<LPVOID>(CWnd::GetSafeHwnd()));
 	}
 	else
 	{
@@ -549,3 +559,14 @@ void CAutoclickerMFCDlg::OnCbnSelchangeCombo1()
 	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 	UpdateData(TRUE);
 }
+
+/* DOESNT WORK YET
+LRESULT CAutoclickerMFCDlg::Hotkeymsg(WPARAM, LPARAM)
+{
+	return LRESULT();
+}
+
+LRESULT CAutoclickerMFCDlg::Stopkeymsg(WPARAM, LPARAM)
+{
+	return LRESULT();
+} */

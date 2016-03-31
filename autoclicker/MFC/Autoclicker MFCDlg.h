@@ -31,6 +31,9 @@ protected:
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
+	/* DOESNT WORK YET
+	afx_msg LRESULT Hotkeymsg(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT Stopkeymsg(WPARAM wParam, LPARAM lParam); */
 	DECLARE_MESSAGE_MAP()
 public:
 	INT RadioChoice;

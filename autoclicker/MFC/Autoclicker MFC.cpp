@@ -10,7 +10,6 @@
 #define new DEBUG_NEW
 #endif
 
-
 // CAutoclickerMFCApp
 
 BEGIN_MESSAGE_MAP(CAutoclickerMFCApp, CWinApp)
