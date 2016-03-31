@@ -2,7 +2,7 @@
 
 struct VKeyStruct {
 	char* Name;
-	uint8_t VKey;
+	unsigned __int8 VKey;
 	char* Description;
 };
 const VKeyStruct VKeyList[177] = {
