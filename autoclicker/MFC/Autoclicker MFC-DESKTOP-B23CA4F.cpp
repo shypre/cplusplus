@@ -1,5 +1,4 @@
-// Autoclicker MFC
-// Copyright 2016 Michael Lin
+
 // Autoclicker MFC.cpp : Defines the class behaviors for the application.
 //
 
@@ -11,9 +10,11 @@
 #define new DEBUG_NEW
 #endif
 
+
 // CAutoclickerMFCApp
 
 BEGIN_MESSAGE_MAP(CAutoclickerMFCApp, CWinApp)
+	ON_COMMAND(ID_HELP, &CWinApp::OnHelp)
 	ON_COMMAND(ID_FILE_QUIT32772, &CAutoclickerMFCApp::OnFileQuit32772)
 	ON_COMMAND(ID_HELP_ABOUT, &CAutoclickerMFCApp::OnHelpAbout)
 END_MESSAGE_MAP()
@@ -26,6 +27,7 @@ CAutoclickerMFCApp::CAutoclickerMFCApp()
 	// support Restart Manager
 	m_dwRestartManagerSupportFlags = AFX_RESTART_MANAGER_SUPPORT_RESTART;
 
+	// TODO: add construction code here,
 	// Place all significant initialization in InitInstance
 }
 
@@ -64,7 +66,9 @@ BOOL CAutoclickerMFCApp::InitInstance()
 	// of your final executable, you should remove from the following
 	// the specific initialization routines you do not need
 	// Change the registry key under which our settings are stored
-	// SetRegistryKey(_T("Autoclicker MFC"));
+	// TODO: You should modify this string to be something appropriate
+	// such as the name of your company or organization
+	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 
 	CAutoclickerMFCDlg dlg;
 	m_pMainWnd = &dlg;
@@ -89,20 +93,20 @@ BOOL CAutoclickerMFCApp::InitInstance()
 
 
 void CAutoclickerMFCApp::OnFileQuit32772()
-//Quit option in menu bar
 {
+	// TODO: Add your command handler code here
 	PostQuitMessage(0);
 }
 
 
 void CAutoclickerMFCApp::OnHelpAbout()
-//About option in menu bar
 {
-	AfxMessageBox(_T("Autoclicker MFC\nCopyright 2016 Michael Lin"), MB_OK | MB_ICONINFORMATION);
+	// TODO: Add your command handler code here
+
 }
 
 
-//Prevents escape or enter key closing the main window by overriding PreTranslateMessage (solution from stackoverflow)
+//Prevents escape or enter key closing the window by overriding PreTranslateMessage (solution from stackoverflow)
 BOOL CAutoclickerMFCApp::PreTranslateMessage(MSG* pMsg)
 {
 	if (pMsg->message == WM_KEYDOWN)

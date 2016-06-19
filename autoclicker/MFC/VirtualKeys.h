@@ -1,4 +1,6 @@
-//Credits to Hans Henrik for writing this data structure so everyone can use it
+// Autoclicker MFC
+// Copyright 2016 Michael Lin
+// Static array of each virtual key's macro name, its ID, and its description on MSDN
 
 struct VKeyStruct {
 	CString Name;
@@ -6,7 +8,7 @@ struct VKeyStruct {
 	CString Description;
 };
 
-const VKeyStruct VKeyList[178] = {
+const VKeyStruct VKeyList[] = {
 	{ _T("VK_LBUTTON"), 0x01, _T("Left mouse button") },
 	{ _T("VK_RBUTTON"), 0x02, _T("Right mouse button") },
 	{ _T("VK_CANCEL"), 0x03, _T("Control-break processing") },

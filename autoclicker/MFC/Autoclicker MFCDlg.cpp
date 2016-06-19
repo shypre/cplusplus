@@ -1,9 +1,11 @@
-
+// Autoclicker MFC
+// Copyright 2016 Michael Lin
 // Autoclicker MFCDlg.cpp : implementation file
 //
 
 #include "stdafx.h"
 #include "VirtualKeys.h"
+#include "ClickingThread.h"
 #include "Autoclicker MFC.h"
 #include "Autoclicker MFCDlg.h"
 #include "afxdialogex.h"
@@ -14,42 +16,6 @@
 #define new DEBUG_NEW
 #endif
 
-// Used for communication between threads and main window
-#define HOTKEYMSG 0x8410
-#define STOPKEYMSG 0x8411
-
-// CAboutDlg dialog used for App About
-
-class CAboutDlg : public CDialogEx
-{
-public:
-	CAboutDlg();
-
-// Dialog Data
-#ifdef AFX_DESIGN_TIME
-	enum { IDD = IDD_ABOUTBOX };
-#endif
-
-	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-
-// Implementation
-protected:
-	DECLARE_MESSAGE_MAP()
-};
-
-CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
-{
-}
-
-void CAboutDlg::DoDataExchange(CDataExchange* pDX)
-{
-	CDialogEx::DoDataExchange(pDX);
-}
-
-BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
-END_MESSAGE_MAP()
-
 
 // CAutoclickerMFCDlg dialog
 
@@ -57,54 +23,43 @@ END_MESSAGE_MAP()
 
 CAutoclickerMFCDlg::CAutoclickerMFCDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_AUTOCLICKERMFC_DIALOG, pParent)
-	, RadioChoice(0)
 	, CStr_IDC_EDIT1(_T(""))
-	, Hotkeystr("")
-	, Stopkeystr("")
-	, Clicktimestr("")
-	, Durationstr("")
-	, ComboBoxChoice(0)
-	, XCoordstr("")
-	, YCoordstr("")
+	, DelayValue(_T(""))
+	, RadioButtonSelUp(FALSE)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
+//Dynamic data exchange and validation
 void CAutoclickerMFCDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Radio(pDX, IDC_RADIO1, RadioChoice);
 	DDX_Text(pDX, IDC_EDIT1, CStr_IDC_EDIT1);
-	DDX_Text(pDX, IDC_EDIT2, Hotkeystr);
-	//DDV_MaxChars(pDX, Hotkey, 8);
-	DDX_Text(pDX, IDC_EDIT3, Stopkeystr);
-	//DDV_MaxChars(pDX, Stopkey, 8);
-	DDX_Text(pDX, IDC_EDIT4, Clicktimestr);
-	//DDV_MaxChars(pDX, Clicktimestr, 8);
-	DDX_Text(pDX, IDC_EDIT5, Durationstr);
-	//DDV_MaxChars(pDX, Durationstr, 8);
-	DDX_CBIndex(pDX, IDC_COMBO1, ComboBoxChoice);
-	DDX_Text(pDX, IDC_EDIT6, XCoordstr);
-	DDX_Text(pDX, IDC_EDIT7, YCoordstr);
+	DDX_Control(pDX, IDC_HOTKEY2, StartkeyControl);
+	DDX_Control(pDX, IDC_HOTKEY3, StopkeyControl);
+	DDX_Control(pDX, IDC_LIST3, SequenceListBox);
+	DDX_Control(pDX, IDC_COMBO1, ComboBoxCtrl);
+	DDX_Control(pDX, IDC_HOTKEY1, AutokeyCtrl);
+	DDX_Text(pDX, IDC_EDIT3, DelayValue);
+	DDV_MaxChars(pDX, DelayValue, 7);
+	DDX_Radio(pDX, IDC_RADIO1, RadioButtonSelUp);
 }
 
 BEGIN_MESSAGE_MAP(CAutoclickerMFCDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	/* DOESNT WORK YET
-	ON_MESSAGE(HOTKEYMSG, Hotkeymsg)
-	ON_MESSAGE(STOPKEYMSG, Stopkeymsg) */
-	ON_BN_CLICKED(IDC_RADIO1, &CAutoclickerMFCDlg::OnBnClickedRadio1)
-	ON_BN_CLICKED(IDC_RADIO2, &CAutoclickerMFCDlg::OnBnClickedRadio2)
 	ON_BN_CLICKED(IDC_BUTTON1, &CAutoclickerMFCDlg::OnBnClickedButton1)
 	ON_BN_CLICKED(IDC_BUTTON2, &CAutoclickerMFCDlg::OnBnClickedButton2)
 	ON_BN_CLICKED(IDC_BUTTON3, &CAutoclickerMFCDlg::OnBnClickedButton3)
 	ON_BN_CLICKED(IDC_BUTTON4, &CAutoclickerMFCDlg::OnBnClickedButton4)
 	ON_BN_CLICKED(IDC_BUTTON5, &CAutoclickerMFCDlg::OnBnClickedButton5)
+	ON_BN_CLICKED(IDC_RADIO1, &CAutoclickerMFCDlg::OnBnClickedRadio1)
+	ON_BN_CLICKED(IDC_RADIO2, &CAutoclickerMFCDlg::OnBnClickedRadio2)
 	ON_BN_CLICKED(IDC_BUTTON6, &CAutoclickerMFCDlg::OnBnClickedButton6)
 	ON_BN_CLICKED(IDC_BUTTON7, &CAutoclickerMFCDlg::OnBnClickedButton7)
-	ON_CBN_SELCHANGE(IDC_COMBO1, &CAutoclickerMFCDlg::OnCbnSelchangeCombo1)
+	ON_BN_CLICKED(IDC_BUTTON8, &CAutoclickerMFCDlg::OnBnClickedButton8)
+	ON_MESSAGE(UWM_CURRENTNODE, ChangeSelection)
 END_MESSAGE_MAP()
 
 
@@ -114,73 +69,84 @@ BOOL CAutoclickerMFCDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	// Add "About..." menu item to system menu.
-
-	// IDM_ABOUTBOX must be in the system command range.
-	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
-	ASSERT(IDM_ABOUTBOX < 0xF000);
-
 	CMenu* pSysMenu = GetSystemMenu(FALSE);
-	if (pSysMenu != NULL)
-	{
-		BOOL bNameValid;
-		CString strAboutMenu;
-		bNameValid = strAboutMenu.LoadString(IDS_ABOUTBOX);
-		ASSERT(bNameValid);
-		if (!strAboutMenu.IsEmpty())
-		{
-			pSysMenu->AppendMenu(MF_SEPARATOR);
-			pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
-		}
-	}
 
 	// Set the icon for this dialog.  The framework does this automatically
 	//  when the application's main window is not a dialog
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
-	// TODO: Add extra initialization here
-	ScreenResX = GetSystemMetrics(SM_CXSCREEN);
-	ScreenResY = GetSystemMetrics(SM_CYSCREEN);
-	XScaleFactor = 65535 / ScreenResX;
-	YScaleFactor = 65535 / ScreenResY;
-	for (int i = 0; i < 176; ++i)
-	{
-		if (VKeyList[i].VKey == 162)
-		{
-			Hotkeystr = VKeyList[i].Description;
-		}
-		if (VKeyList[i].VKey == 160)
-		{
-			Stopkeystr = VKeyList[i].Description;
-		}
-	}
-	Clicktimestr = _T("100");
-	Durationstr = _T("50");
-	XCoordstr = _T("0");
-	YCoordstr = _T("0");
-	RadioChoice = 0;
-	ComboBoxChoice = 0;
-	Bindstart = FALSE;
-	Bindstop = FALSE;
-	Hotkeystrptr = &Hotkeystr;
-	Stopkeystrptr = &Stopkeystr;
+	//Initial values
+	ComboBoxCtrl.SetCurSel(0);
+
+	SequenceListBox.SetExtendedStyle(SequenceListBox.GetExtendedStyle() | LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+
+	LVCOLUMN lvColumn;
+
+	lvColumn.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
+	lvColumn.fmt = LVCFMT_LEFT;
+	lvColumn.cx = 0;
+	lvColumn.pszText = _T("");
+	SequenceListBox.InsertColumn(0, &lvColumn);
+
+	lvColumn.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
+	lvColumn.fmt = LVCFMT_LEFT;
+	lvColumn.cx = 30;
+	lvColumn.pszText = _T("");
+	SequenceListBox.InsertColumn(1, &lvColumn);
+
+	lvColumn.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
+	lvColumn.fmt = LVCFMT_LEFT;
+	lvColumn.cx = 40;
+	lvColumn.pszText = _T("Key");
+	SequenceListBox.InsertColumn(2, &lvColumn);
+
+	lvColumn.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
+	lvColumn.fmt = LVCFMT_LEFT;
+	lvColumn.cx = 40;
+	lvColumn.pszText = _T("Wait");
+	SequenceListBox.InsertColumn(3, &lvColumn);
+
+	lvColumn.mask = LVCF_FMT | LVCF_TEXT | LVCF_WIDTH;
+	lvColumn.fmt = LVCFMT_LEFT;
+	lvColumn.cx = 60;
+	lvColumn.pszText = _T("Down/Up");
+	SequenceListBox.InsertColumn(4, &lvColumn);
+
+	LVITEM lvItem;
+	lvItem.mask = LVIF_TEXT;
+	lvItem.iItem = 0;
+	lvItem.iSubItem = 0;
+	lvItem.pszText = _T("");
+	SequenceListBox.InsertItem(&lvItem);
+	SequenceListBox.SetItemText(0, 1, _T(">"));
+	SequenceListBox.SetItemText(0, 2, _T("LMB"));
+	SequenceListBox.SetItemText(0, 3, _T("10"));
+	SequenceListBox.SetItemText(0, 4, _T("Down"));
+
+	lvItem.iItem = 1;
+	lvItem.pszText = _T("");
+	SequenceListBox.InsertItem(&lvItem);
+	SequenceListBox.SetItemText(1, 1, _T("2"));
+	SequenceListBox.SetItemText(1, 2, _T("LMB"));
+	SequenceListBox.SetItemText(1, 3, _T("10"));
+	SequenceListBox.SetItemText(1, 4, _T("Up"));
+
+	lastposition = 0;
+
 	UpdateData(FALSE);
+	//Start the thread
+	pClickThread = (CClickingThread*)AfxBeginThread(RUNTIME_CLASS(CClickingThread), THREAD_PRIORITY_BELOW_NORMAL, 0, CREATE_SUSPENDED);
+	//Pass the handle to the main window
+	pClickThread->mainwindowhwnd = m_hWnd;
+	pClickThread->ResumeThread();
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
 void CAutoclickerMFCDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
-	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
-	{
-		CAboutDlg dlgAbout;
-		dlgAbout.DoModal();
-	}
-	else
-	{
-		CDialogEx::OnSysCommand(nID, lParam);
-	}
+	CDialogEx::OnSysCommand(nID, lParam);
 }
 
 // If you add a minimize button to your dialog, you will need the code below
@@ -220,353 +186,311 @@ HCURSOR CAutoclickerMFCDlg::OnQueryDragIcon()
 }
 
 
-typedef struct ClickingInfoStruct
-{
-	INPUT Input { 0 };
-	volatile BOOL isRunning = FALSE;
-	UINT Hotkey = 0xA2, Stopkey = 0xA0, Clicktime = 100;
-	INT Duration = 50;
-	DWORD InputFlags1 = MOUSEEVENTF_LEFTDOWN, InputFlags2 = MOUSEEVENTF_LEFTUP;
-} ClickingInfo;
-
-static ClickingInfo *ClickingInfoptr = new ClickingInfo;
-
-
-static UINT StartAutoclick(LPVOID pParam)
-{
-	static ClickingInfo *theParam = static_cast<ClickingInfo*> (pParam);
-	theParam->isRunning = TRUE;
-	ZeroMemory(&(theParam->Input), sizeof(theParam->Input));
-	while (theParam->isRunning == TRUE)
-	{
-		if (GetAsyncKeyState(theParam->Stopkey) < 0)
-		{
-			break;
-		}
-		if (GetAsyncKeyState(theParam->Hotkey) < 0)
-		{
-			if (theParam->InputFlags2 == 0)
-			{
-				theParam->Input.mi.mouseData = theParam->Duration;
-			}
-			theParam->Input.mi.dwFlags = theParam->InputFlags1;
-			SendInput(1, &(theParam->Input), sizeof(INPUT));
-			if (theParam->InputFlags2 != 0)
-			{
-				Sleep(theParam->Clicktime);
-				theParam->Input.mi.dwFlags = theParam->InputFlags2;
-				SendInput(1, &(theParam->Input), sizeof(INPUT));
-			}
-		}
-		if (theParam->InputFlags2 != 0)
-		{
-			Sleep(theParam->Clicktime - theParam->Duration);
-		}
-		else
-		{
-			Sleep(theParam->Clicktime);
-		}
-	}
-	static CString msgboxstr1 = _T("Thread 1 has finished");
-	AfxMessageBox(msgboxstr1);
-	theParam->isRunning = FALSE;
-	return 0;
-}
-
-
-static UINT GetKeyBind(LPVOID pParam)
-{
-	HWND MainWindowHWND = static_cast<HWND>(pParam);
-	CString *Hotkeystr = new CString;
-	while (true)
-	{
-		for (int i = 0; i < 176; ++i)
-		{
-			if (GetAsyncKeyState(VKeyList[i].VKey < 0))
-			{
-				*Hotkeystr = VKeyList[i].Description;
-				static CString msgboxstr2 = _T("Thread 2 has finished");
-				AfxMessageBox(msgboxstr2);
-				PostMessage(MainWindowHWND, HOTKEYMSG, reinterpret_cast<WPARAM>(Hotkeystr), 0);
-				return 0;
-			}
-		}
-		Sleep(100);
-	}
-	return 0;
-}
-
-
-void CAutoclickerMFCDlg::OnBnClickedRadio1()
-{
-	// TODO: Add your control notification handler code here
-	static CString clickMsgRadio1 = _T("Radio button 1 was pressed. ");
-	CStr_IDC_EDIT1 += clickMsgRadio1;
-	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-	GetDlgItem(IDC_EDIT6)->EnableWindow(FALSE);
-	GetDlgItem(IDC_EDIT7)->EnableWindow(FALSE);
-	static CString disablecoordbox = _T("X and Y coordinate boxes disabled. ");
-	CStr_IDC_EDIT1 += disablecoordbox;
-	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-}
-
-
-void CAutoclickerMFCDlg::OnBnClickedRadio2()
-{
-	// TODO: Add your control notification handler code here
-	static CString clickMsgRadio2 = _T("Radio button 2 was pressed. ");
-	CStr_IDC_EDIT1 += clickMsgRadio2;
-	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-	GetDlgItem(IDC_EDIT6)->EnableWindow(TRUE);
-	GetDlgItem(IDC_EDIT7)->EnableWindow(TRUE);
-	static CString enablecoordbox = _T("X and Y coordinate boxes enabled. ");
-	CStr_IDC_EDIT1 += enablecoordbox;
-	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-}
-
-
 void CAutoclickerMFCDlg::OnBnClickedButton1()
+//Start Autoclicking button
 {
-	// TODO: Add your control notification handler code here
-	static CString clickMsgButton1 = _T("Push button 1 was pressed. ");
-	CStr_IDC_EDIT1 += clickMsgButton1;
-	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 	UpdateData(FALSE);
-	if (ClickingInfoptr->isRunning == FALSE)
+	if (SequenceListBox.GetItemCount() == 0)
 	{
-		CWinThread *pClickThread = AfxBeginThread(StartAutoclick, ClickingInfoptr);
-		static CString ThreadStart1 = _T("Thread 1 has started. ");
-		CStr_IDC_EDIT1 += ThreadStart1;
-		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+		AfxMessageBox(_T("Can't start autoclicking if there are no entries in the sequence. "));
+		return;
 	}
 	else
 	{
-		static CString msgboxstr2 = _T("Thread 1 is already running!");
-		AfxMessageBox(msgboxstr2);
+		pClickThread->PostThreadMessage(UWM_ARM, true, NULL);
+		static CString armedmsg = _T("Armed. ");
+		CStr_IDC_EDIT1 += armedmsg;
+		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 	}
 }
 
 
 void CAutoclickerMFCDlg::OnBnClickedButton2()
+//Stop Autoclicking button
 {
-	// TODO: Add your control notification handler code here
-	static CString clickMsgButton2 = _T("Push button 2 was pressed. ");
-	CStr_IDC_EDIT1 += clickMsgButton2;
+	pClickThread->PostThreadMessage(UWM_ARM, false, NULL);
+	static CString unarmedmsg = _T("UnArmed. ");
+	CStr_IDC_EDIT1 += unarmedmsg;
 	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-	if (ClickingInfoptr->isRunning == TRUE)
-	{
-		static CString ThreadStop1 = _T("Stopping thread 1. ");
-		CStr_IDC_EDIT1 += ThreadStop1;
-		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-		ClickingInfoptr->isRunning = FALSE;
-	}
-	else
-	{
-		static CString ThreadStopped1 = _T("Thread 1 not running. ");
-		CStr_IDC_EDIT1 += ThreadStopped1;
-		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-	}
 }
-
 
 void CAutoclickerMFCDlg::OnBnClickedButton3()
+//Set Start key button
 {
-	// TODO: Add your control notification handler code here
-	static CString clickMsgButton3 = _T("Push button 3 was pressed. ");
-	CStr_IDC_EDIT1 += clickMsgButton3;
+	UpdateData(TRUE);
+	PostThreadMessage(pClickThread->m_nThreadID, UWM_NEWHOTKEY, StartkeyControl.GetHotKey(), NULL);
+	static CString hotkeymsg = _T("Hotkey set. ");
+	CStr_IDC_EDIT1 += hotkeymsg;
 	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-	if (ClickingInfoptr->isRunning == TRUE)
-	{
-		static CString Thread1active = _T("Thread 1 is running, stop it then try again. ");
-		CStr_IDC_EDIT1 += Thread1active;
-		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-		return;
-	}
-	if (Bindstart == FALSE)
-	{
-		static CString bindstartmsg = _T("Press any key to bind as Start key, press escape or either bind button to cancel. ");
-		CStr_IDC_EDIT1 += bindstartmsg;
-		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-		Bindstart = TRUE;
-		CWinThread *pBindThread1 = AfxBeginThread(GetKeyBind, static_cast<LPVOID>(CWnd::GetSafeHwnd()));
-	}
-	else
-	{
-		Bindstart = FALSE;
-		static CString bindstopmsg = _T("Binding Start key cancelled. ");
-		CStr_IDC_EDIT1 += bindstopmsg;
-		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-	}
 }
 
-
 void CAutoclickerMFCDlg::OnBnClickedButton4()
+//Set Stop key button
 {
-	// TODO: Add your control notification handler code here
-	static CString clickMsgButton4 = _T("Push button 4 was pressed. ");
-	CStr_IDC_EDIT1 += clickMsgButton4;
+	UpdateData(TRUE);
+	PostThreadMessage(pClickThread->m_nThreadID, UWM_NEWSTOPKEY, StopkeyControl.GetHotKey(), NULL);
+	static CString stopkeymsg = _T("Stopkey set. ");
+	CStr_IDC_EDIT1 += stopkeymsg;
 	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 }
 
 
 void CAutoclickerMFCDlg::OnBnClickedButton5()
+//Insert before selection button
+//Lots of counting required here since CListCtrl doesn't have an easy way to do this
 {
-	// TODO: Add your control notification handler code here
-	static CString clickMsgButton5 = _T("Push button 5 was pressed. ");
-	CStr_IDC_EDIT1 += clickMsgButton5;
-	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 	UpdateData(TRUE);
-	if (_ttoi(Durationstr) >= _ttoi(Clicktimestr) && ComboBoxChoice != 3)
+
+	if (((ComboBoxCtrl.GetCurSel() == 0) && (AutokeyCtrl.GetHotKey()) == 0) || (ComboBoxCtrl.GetCurSel() != 0) && (AutokeyCtrl.GetHotKey() != 0))
 	{
-		CStr_IDC_EDIT1 += "Error: Duration is not less than Clicktime, changing Duration to half of Clicktime. ";
+		static CString doublesel = _T("Can't have autokey in both or no fields. Change only one field to none. ");
+		CStr_IDC_EDIT1 += doublesel;
 		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-		Durationstr = std::to_string(_ttoi(Clicktimestr) / 2).c_str();
+		return;
 	}
-	ClickingInfoptr->Clicktime = abs(_ttoi(Clicktimestr));
-	ClickingInfoptr->Duration = _ttoi(Durationstr);
-	for (int i = 0; i < 176; ++i)
+	else if ((HIBYTE(LOWORD(AutokeyCtrl.GetHotKey())) & HOTKEYF_CONTROL) == HOTKEYF_CONTROL || (HIBYTE(LOWORD(AutokeyCtrl.GetHotKey())) & HOTKEYF_SHIFT) == HOTKEYF_SHIFT || (HIBYTE(LOWORD(AutokeyCtrl.GetHotKey())) & HOTKEYF_ALT) == HOTKEYF_ALT)
 	{
-		if (Hotkeystr == VKeyList[i].Description)
+		static CString nomodkeys = _T("Can't have more than one autokey for each item. For keys like mouse buttons and command keys use the drop down menu. ");
+		CStr_IDC_EDIT1 += nomodkeys;
+		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+		return;
+	}
+	static TwoInts waitandpos;
+	waitandpos.position = SequenceListBox.GetSelectionMark();
+	if (waitandpos.position == -1)
+	{
+		waitandpos.position = pClickThread->Sequence.size();
+	}
+	if (insertbefore != 1)
+	{
+		insertbefore = 2;
+	}
+	waitandpos.waittime = _ttoi(DelayValue);
+	CString keyname = _T("");
+	static INPUT input{ 0 };
+	SecureZeroMemory(&input, sizeof(INPUT));
+	if (ComboBoxCtrl.GetCurSel() != 0)
+	{
+		int choice = ComboBoxCtrl.GetCurSel();
+		switch (choice)
 		{
-			ClickingInfoptr->Hotkey = VKeyList[i].VKey;
-			break;
+			case 1:
+				input.type = INPUT_MOUSE;
+				if (RadioButtonSelUp == FALSE)
+				{
+					input.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+				}
+				else if (RadioButtonSelUp == TRUE)
+				{
+					input.mi.dwFlags = MOUSEEVENTF_LEFTUP;
+				}
+				keyname = _T("LMB");
+				break;
+			case 2:
+				input.type = INPUT_MOUSE;
+				if (RadioButtonSelUp == FALSE)
+				{
+					input.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
+				}
+				else if (RadioButtonSelUp == TRUE)
+				{
+					input.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
+				}
+				keyname = _T("RMB");
+				break;
+			case 3:
+				input.type = INPUT_MOUSE;
+				if (RadioButtonSelUp == FALSE)
+				{
+					input.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN;
+				}
+				else if (RadioButtonSelUp == TRUE)
+				{
+					input.mi.dwFlags = MOUSEEVENTF_MIDDLEUP;
+				}
+				keyname = _T("MMB");
+				break;
+			case 4:
+				input.type = INPUT_MOUSE;
+				input.mi.dwFlags = MOUSEEVENTF_WHEEL;
+				if (RadioButtonSelUp == FALSE)
+				{
+					input.mi.mouseData = WHEEL_DELTA * -1;
+				}
+				else if (RadioButtonSelUp == TRUE)
+				{
+					input.mi.mouseData = WHEEL_DELTA;
+				}
+				keyname = _T("MW");
+				break;
+			case 5:
+				input.type = INPUT_KEYBOARD;
+				input.ki.wVk = 0xA2;
+				if (RadioButtonSelUp == TRUE)
+				{
+					input.ki.dwFlags = KEYEVENTF_KEYUP;
+				}
+				keyname = _T("LCtrl");
+				break;
+			case 6:
+				input.type = INPUT_KEYBOARD;
+				input.ki.wVk = 0xA4;
+				if (RadioButtonSelUp == TRUE)
+				{
+					input.ki.dwFlags = KEYEVENTF_KEYUP;
+				}
+				keyname = _T("LAlt");
+				break;
+			case 7:
+				input.type = INPUT_KEYBOARD;
+				input.ki.wVk = 0xA0;
+				if (RadioButtonSelUp == TRUE)
+				{
+					input.ki.dwFlags = KEYEVENTF_KEYUP;
+				}
+				keyname = _T("LShift");
+				break;
+			case 8:
+				input.type = INPUT_KEYBOARD;
+				input.ki.wVk = 0x20;
+				if (RadioButtonSelUp == TRUE)
+				{
+					input.ki.dwFlags = KEYEVENTF_KEYUP;
+				}
+				keyname = _T("Space");
+				break;
+			default:
+				AfxMessageBox(_T("Error\nNo matching value found for combobox choice\nKey not added"), MB_ICONSTOP | MB_OK);
+				return;
 		}
-		else if (abs(_ttoi(Hotkeystr)) == VKeyList[i].VKey)
+		
+	}
+	else if (AutokeyCtrl.GetHotKey() != 0)
+	{
+		input.type = INPUT_KEYBOARD;
+		input.ki.wVk = LOBYTE(LOWORD(AutokeyCtrl.GetHotKey()));
+		if (RadioButtonSelUp == TRUE)
 		{
-			ClickingInfoptr->Hotkey = VKeyList[i].VKey;
-			Hotkeystr = VKeyList[i].Description;
-			break;
+			input.ki.dwFlags = KEYEVENTF_KEYUP;
 		}
-		if (i == 175)
+		keyname = AutokeyCtrl.GetHotKeyName();
+	}
+	
+	static INPUT* inputptr = &input;
+	static TwoInts* waitandposptr = &waitandpos;
+
+	LVITEM lvItem;
+	lvItem.mask = LVIF_TEXT;
+	lvItem.iItem = waitandpos.position;
+	lvItem.iSubItem = 0;
+	lvItem.pszText = _T("");
+	CString numcstr(std::to_string(waitandpos.position + 1).c_str());
+	SequenceListBox.InsertItem(&lvItem);
+	SequenceListBox.SetItemText(waitandpos.position, 1, numcstr);
+	SequenceListBox.SetItemText(waitandpos.position, 2, keyname);
+	SequenceListBox.SetItemText(waitandpos.position, 3, DelayValue);
+
+	for (int i = waitandpos.position; i < SequenceListBox.GetItemCount(); ++i)
+	{
+		if (SequenceListBox.GetItemText(i + 1, 1) != _T(">"))
 		{
-			static CString nomatchmsg1 = _T("Hotkey was not assigned, check key spelling. ");
-			CStr_IDC_EDIT1 += nomatchmsg1;
-			SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-			break;
+			CString numcstr2(std::to_string(i + 2).c_str());
+			SequenceListBox.SetItemText(i + 1, 1, numcstr2);
 		}
 	}
-	for (int i = 0; i < 176; ++i)
+
+	if (RadioButtonSelUp == FALSE)
 	{
-		if (Stopkeystr == VKeyList[i].Description)
-		{
-			ClickingInfoptr->Stopkey = VKeyList[i].VKey;
-			break;
-		}
-		else if (abs(_ttoi(Stopkeystr)) == VKeyList[i].VKey)
-		{
-			ClickingInfoptr->Stopkey = VKeyList[i].VKey;
-			Stopkeystr = VKeyList[i].Description;
-			break;
-		}
-		if (i == 175)
-		{
-			static CString nomatchmsg2 = _T("Stopkey was not assigned, check key spelling. ");
-			CStr_IDC_EDIT1 += nomatchmsg2;
-			SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-			break;
-		}
+		SequenceListBox.SetItemText(waitandpos.position, 4, _T("Down"));
 	}
-	if (RadioChoice == 0)
+	else if (RadioButtonSelUp == TRUE)
 	{
-		ClickingInfoptr->InputFlags1 = 0;
-		ClickingInfoptr->InputFlags2 = 0;
+		SequenceListBox.SetItemText(waitandpos.position, 4, _T("Up"));
 	}
-	if (ComboBoxChoice == 0)
+	if (waitandpos.position >= lastposition)
 	{
-		ClickingInfoptr->InputFlags1 = MOUSEEVENTF_LEFTDOWN;
-		ClickingInfoptr->InputFlags2 = MOUSEEVENTF_LEFTUP;
+		++lastposition;
 	}
-	else if (ComboBoxChoice == 1)
-	{
-		ClickingInfoptr->InputFlags1 = MOUSEEVENTF_RIGHTDOWN;
-		ClickingInfoptr->InputFlags2 = MOUSEEVENTF_RIGHTUP;
-	}
-	else if (ComboBoxChoice == 2)
-	{
-		ClickingInfoptr->InputFlags1 = MOUSEEVENTF_MIDDLEDOWN;
-		ClickingInfoptr->InputFlags2 = MOUSEEVENTF_MIDDLEUP;
-	}
-	else if (ComboBoxChoice == 3)
-	{
-		ClickingInfoptr->InputFlags1 = MOUSEEVENTF_WHEEL;
-		ClickingInfoptr->InputFlags2 = 0;
-	}
-	if (RadioChoice == 1)
-	{
-		ClickingInfoptr->InputFlags1 += MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_VIRTUALDESK;
-		ClickingInfoptr->InputFlags2 += MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | MOUSEEVENTF_VIRTUALDESK;
-		ClickingInfoptr->Input.mi.dx = _ttol(XCoordstr) * XScaleFactor;
-		ClickingInfoptr->Input.mi.dy = _ttol(YCoordstr) * YScaleFactor;
-	}
-	UpdateData(FALSE);
+	PostThreadMessage(pClickThread->m_nThreadID, UWM_ADDAUTOKEY, reinterpret_cast<WPARAM>(inputptr), reinterpret_cast<LPARAM>(waitandposptr));
+	insertbefore = 0;
 }
 
 
 void CAutoclickerMFCDlg::OnBnClickedButton6()
+//Insert at end button
 {
-	// TODO: Add your control notification handler code here
-	static CString clickMsgButton6 = _T("Push button 6 was pressed. ");
-	CStr_IDC_EDIT1 += clickMsgButton6;
-	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-	for (int i = 0; i < 176; ++i)
-	{
-		if (VKeyList[i].VKey == 162)
-		{
-			Hotkeystr = VKeyList[i].Description;
-		}
-		if (VKeyList[i].VKey == 160)
-		{
-			Stopkeystr = VKeyList[i].Description;
-		}
-	}
-	Clicktimestr = _T("100");
-	Durationstr = _T("50");
-	XCoordstr = _T("0");
-	YCoordstr = _T("0");
-	RadioChoice = 0;
-	ComboBoxChoice = 0;
-	UpdateData(FALSE);
+	insertbefore = 1;
 	CAutoclickerMFCDlg::OnBnClickedButton5();
 }
 
 
 void CAutoclickerMFCDlg::OnBnClickedButton7()
+//Remove selected button
 {
-	// TODO: Add your control notification handler code here
-	static CString clickMsgButton7 = _T("Push button 7 was pressed. ");
-	CStr_IDC_EDIT1 += clickMsgButton7;
-	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
-	if (ComboBoxChoice == 3)
+	if (SequenceListBox.GetSelectionMark() == -1)
 	{
-		GetDlgItemText(IDC_EDIT5, Durationstr);
-		Durationstr = std::to_string(_ttoi(Durationstr) * -1).c_str();
-		SetDlgItemText(IDC_EDIT5, Durationstr);
+		return;
+	}
+	else if (SequenceListBox.GetItemText(SequenceListBox.GetSelectionMark(), 1) == _T(">"))
+	{
+		CString noremcurrent = _T("Can't remove item that is next to be executed. ");
+		CStr_IDC_EDIT1 += noremcurrent;
+		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+		return;
 	}
 	else
 	{
-		static CString reverseerror = _T("Mouse button to simulate must be mouse wheel to reverse direction. ");
-		CStr_IDC_EDIT1 += reverseerror;
-		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+		int pos = SequenceListBox.GetSelectionMark();
+		SequenceListBox.DeleteItem(pos);
+		for (int i = pos; i < SequenceListBox.GetItemCount(); ++i)
+		{
+			if (SequenceListBox.GetItemText(i, 1) != _T(">"))
+			{
+				CString numcstr2(std::to_string(i + 1).c_str());
+				SequenceListBox.SetItemText(i, 1, numcstr2);
+			}
+		}
+		PostThreadMessage(pClickThread->m_nThreadID, UWM_DELAUTOKEY, pos, false);
 	}
 }
 
 
-void CAutoclickerMFCDlg::OnCbnSelchangeCombo1()
+void CAutoclickerMFCDlg::OnBnClickedButton8()
+//Clear all button
 {
-	// TODO: Add your control notification handler code here
-	static CString ComboBoxSel = _T("Combobox selection changed. ");
-	CStr_IDC_EDIT1 += ComboBoxSel;
-	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
+	if (AfxMessageBox(_T("Are you sure you want to remove all entries? "), MB_YESNO | MB_ICONEXCLAMATION | MB_DEFBUTTON2) == IDYES)
+	{
+		SequenceListBox.DeleteAllItems();
+		PostThreadMessage(pClickThread->m_nThreadID, UWM_DELAUTOKEY, 0, true);
+		CAutoclickerMFCDlg::OnBnClickedButton2();
+	}
+	else
+	{
+		return;
+	}
+}
+
+
+void CAutoclickerMFCDlg::OnBnClickedRadio1()
+//Down radio button
+{
 	UpdateData(TRUE);
 }
 
-/* DOESNT WORK YET
-LRESULT CAutoclickerMFCDlg::Hotkeymsg(WPARAM, LPARAM)
+
+void CAutoclickerMFCDlg::OnBnClickedRadio2()
+//Up radio button
 {
-	return LRESULT();
+	UpdateData(TRUE);
 }
 
-LRESULT CAutoclickerMFCDlg::Stopkeymsg(WPARAM, LPARAM)
+//Thread message when the next item to be executed changes
+LRESULT CAutoclickerMFCDlg::ChangeSelection(WPARAM wParam, LPARAM lParam)
 {
+	int pos = static_cast<int>(wParam);
+	CString tempnum(std::to_string(lastposition+1).c_str());
+	SequenceListBox.SetItemText(lastposition, 1, tempnum);
+	SequenceListBox.SetItemText(pos, 1, _T(">"));
+	lastposition = pos;
 	return LRESULT();
-} */
+}

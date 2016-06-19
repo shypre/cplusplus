@@ -1,20 +1,10 @@
-// Autoclicker MFC
-// Copyright 2016 Michael Lin
+
 // Autoclicker MFCDlg.h : header file
 //
 
 #pragma once
 
-#include "ClickingThread.h"
 #include <sstream>
-#include <vector>
-#include "afxcmn.h"
-#include "afxwin.h"
-
-typedef struct TwoIntsStruct
-{
-	int waittime, position;
-}TwoInts;
 
 // CAutoclickerMFCDlg dialog
 class CAutoclickerMFCDlg : public CDialogEx
@@ -42,24 +32,31 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
+	afx_msg LRESULT Hotkeymsg(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT Stopkeymsg(WPARAM wParam, LPARAM lParam);
 public:
-	CString CStr_IDC_EDIT1;
+	INT RadioChoice;
+	afx_msg void OnBnClickedRadio1();
+	afx_msg void OnBnClickedRadio2();
 	afx_msg void OnBnClickedButton1();
+	CString CStr_IDC_EDIT1;
 	afx_msg void OnBnClickedButton2();
+	CString Hotkeystr;
+	CString Stopkeystr;
+	CString *Hotkeystrptr;
+	CString *Stopkeystrptr;
+	CString Clicktimestr;
+	CString Durationstr;
+	INT ComboBoxChoice;
 	afx_msg void OnBnClickedButton3();
 	afx_msg void OnBnClickedButton4();
 	afx_msg void OnBnClickedButton5();
+	CString XCoordstr;
+	CString YCoordstr;
 	afx_msg void OnBnClickedButton6();
+	DOUBLE ScreenResX, ScreenResY, XScaleFactor, YScaleFactor;
+	std::stringstream ss;
 	afx_msg void OnBnClickedButton7();
-	afx_msg void OnBnClickedButton8();
-	afx_msg void OnBnClickedRadio1();
-	afx_msg void OnBnClickedRadio2();
-	afx_msg LRESULT ChangeSelection(WPARAM wParam, LPARAM lParam);
-	CClickingThread* pClickThread;
-	CListCtrl SequenceListBox;
-	CHotKeyCtrl StartkeyControl, StopkeyControl, AutokeyCtrl;
-	CComboBox ComboBoxCtrl;
-	CString DelayValue;
-	BOOL RadioButtonSelUp;
-	int insertbefore, lastposition;
+	afx_msg void OnCbnSelchangeCombo1();
+	BOOL Bindstart, Bindstop;
 };
