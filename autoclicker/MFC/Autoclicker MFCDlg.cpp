@@ -192,13 +192,13 @@ void CAutoclickerMFCDlg::OnBnClickedButton1()
 	UpdateData(FALSE);
 	if (SequenceListBox.GetItemCount() == 0)
 	{
-		AfxMessageBox(_T("Can't start autoclicking if there are no entries in the sequence. "));
+		AfxMessageBox(_T("Can't start autoclicking if there are no entries in the sequence. \r\n"));
 		return;
 	}
 	else
 	{
 		pClickThread->PostThreadMessage(UWM_ARM, true, NULL);
-		static CString armedmsg = _T("Armed. ");
+		static CString armedmsg = _T("Armed. \r\n");
 		CStr_IDC_EDIT1 += armedmsg;
 		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 	}
@@ -209,7 +209,7 @@ void CAutoclickerMFCDlg::OnBnClickedButton2()
 //Stop Autoclicking button
 {
 	pClickThread->PostThreadMessage(UWM_ARM, false, NULL);
-	static CString unarmedmsg = _T("UnArmed. ");
+	static CString unarmedmsg = _T("UnArmed. \r\n");
 	CStr_IDC_EDIT1 += unarmedmsg;
 	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 }
@@ -219,7 +219,7 @@ void CAutoclickerMFCDlg::OnBnClickedButton3()
 {
 	UpdateData(TRUE);
 	PostThreadMessage(pClickThread->m_nThreadID, UWM_NEWHOTKEY, StartkeyControl.GetHotKey(), NULL);
-	static CString hotkeymsg = _T("Hotkey set. ");
+	static CString hotkeymsg = _T("Hotkey set. \r\n");
 	CStr_IDC_EDIT1 += hotkeymsg;
 	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 }
@@ -229,7 +229,7 @@ void CAutoclickerMFCDlg::OnBnClickedButton4()
 {
 	UpdateData(TRUE);
 	PostThreadMessage(pClickThread->m_nThreadID, UWM_NEWSTOPKEY, StopkeyControl.GetHotKey(), NULL);
-	static CString stopkeymsg = _T("Stopkey set. ");
+	static CString stopkeymsg = _T("Stopkey set. \r\n");
 	CStr_IDC_EDIT1 += stopkeymsg;
 	SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 }
@@ -243,14 +243,14 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 
 	if (((ComboBoxCtrl.GetCurSel() == 0) && (AutokeyCtrl.GetHotKey()) == 0) || (ComboBoxCtrl.GetCurSel() != 0) && (AutokeyCtrl.GetHotKey() != 0))
 	{
-		static CString doublesel = _T("Can't have autokey in both or no fields. Change only one field to none. ");
+		static CString doublesel = _T("Can't have autokey in both or no fields. Change only one field to none. \r\n");
 		CStr_IDC_EDIT1 += doublesel;
 		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 		return;
 	}
 	else if ((HIBYTE(LOWORD(AutokeyCtrl.GetHotKey())) & HOTKEYF_CONTROL) == HOTKEYF_CONTROL || (HIBYTE(LOWORD(AutokeyCtrl.GetHotKey())) & HOTKEYF_SHIFT) == HOTKEYF_SHIFT || (HIBYTE(LOWORD(AutokeyCtrl.GetHotKey())) & HOTKEYF_ALT) == HOTKEYF_ALT)
 	{
-		static CString nomodkeys = _T("Can't have more than one autokey for each item. For keys like mouse buttons and command keys use the drop down menu. ");
+		static CString nomodkeys = _T("Can't have more than one autokey for each item. For keys like mouse buttons and command keys use the drop down menu. \r\n");
 		CStr_IDC_EDIT1 += nomodkeys;
 		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 		return;
@@ -360,7 +360,7 @@ void CAutoclickerMFCDlg::OnBnClickedButton5()
 				keyname = _T("Space");
 				break;
 			default:
-				AfxMessageBox(_T("Error\nNo matching value found for combobox choice\nKey not added"), MB_ICONSTOP | MB_OK);
+				AfxMessageBox(_T("Error\r\nNo matching value found for combobox choice\r\nKey not added"), MB_ICONSTOP | MB_OK);
 				return;
 		}
 		
@@ -433,7 +433,7 @@ void CAutoclickerMFCDlg::OnBnClickedButton7()
 	}
 	else if (SequenceListBox.GetItemText(SequenceListBox.GetSelectionMark(), 1) == _T(">"))
 	{
-		CString noremcurrent = _T("Can't remove item that is next to be executed. ");
+		CString noremcurrent = _T("Can't remove item that is next to be executed. \r\n");
 		CStr_IDC_EDIT1 += noremcurrent;
 		SetDlgItemText(IDC_EDIT1, CStr_IDC_EDIT1);
 		return;
